@@ -1,0 +1,23 @@
+CREATE TABLE IF NOT EXISTS "roles" (
+         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+         name VARCHAR(255) NOT NULL UNIQUE
+     );
+
+CREATE TABLE IF NOT EXISTS "users" (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role_id UUID REFERENCES "roles"(id),
+    locked BOOLEAN NOT NULL DEFAULT FALSE,
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_login_at TIMESTAMP,
+    CONSTRAINT fk_role FOREIGN KEY (role_id) REFERENCES "roles"(id)
+    );
+
+INSERT INTO "roles" (id, name) VALUES
+    ('07279c16-2495-4670-8d5c-3725595304b6', 'ROLE_USER'),
+    ('b30349f5-1049-43c2-841f-1393663a75f1', 'ROLE_ADMIN');
+
