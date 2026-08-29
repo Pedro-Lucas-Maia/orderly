@@ -10,4 +10,20 @@ import lombok.Setter;
 public class InventoryItem {
     Product product;
     int quantity;
+
+    public void increaseQuantity(int amount){
+        if (amount <= 0){
+            throw new IllegalArgumentException("Amount must be greater than zero.");
+        }
+
+        quantity += amount;
+    }
+
+    public void decreaseQuantity(int amount){
+        if (amount <= 0){
+            throw new IllegalArgumentException("Amount must be greater than zero");
+        }
+
+        quantity -= amount;
+    }
 }
