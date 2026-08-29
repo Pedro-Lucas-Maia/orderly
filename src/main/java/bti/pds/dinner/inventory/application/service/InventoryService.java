@@ -9,6 +9,7 @@ import bti.pds.dinner.inventory.domain.Product;
 import bti.pds.dinner.inventory.domain.ProductId;
 import bti.pds.dinner.inventory.domain.ProductRepository;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @AllArgsConstructor
 @Service
@@ -64,7 +65,7 @@ public class InventoryService {
         return inventoryRepository.save(inventory);
     }
 
-    private Inventory getInventory(InventoryId inventoryId) {
+    public Inventory getInventory(InventoryId inventoryId) {
         return inventoryRepository.findById(inventoryId)
                 .orElseThrow(() -> new IllegalArgumentException("Inventory not found."));
     }
