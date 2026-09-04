@@ -1,5 +1,6 @@
 package bti.pds.dinner.inventory.domain;
 
+import bti.pds.dinner.inventory.domain.exception.InsufficientStockException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -39,5 +40,34 @@ public class StockItem {
         this.minimumStock = minimumStock;
         this.unitCost = unitCost;
         this.active = active;
+    }
+
+    public StockItem applyMovement(MovementType movementType, int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than 0");
+        }
+
+        int newQuantity = switch (movementType) {
+            case ENTRADA -> this.currentQuantity + quantity;
+            case SAIDA, PERDA -> {
+                if (this.currentQuantity < quantity) {
+                    throw new InsufficientStockException("Insufficient stock for item: " + this.name);
+                }
+                yield this.currentQuantity - quantity;
+            }
+            case AJUSTE -> quantity;
+        };
+
+        return StockItem.builder()
+                .id(this.id)
+                .stockId(this.stockId)
+                .name(this.name)
+                .category(this.category)
+                .unit(this.unit)
+                .currentQuantity(newQuantity)
+                .minimumStock(this.minimumStock)
+                .unitCost(this.unitCost)
+                .active(this.active)
+                .build();
     }
 }
