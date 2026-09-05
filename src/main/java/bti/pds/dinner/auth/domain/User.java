@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 public class User {
     private UserId id;
     private String name;
+    private String cpf;
     private String email;
     private String password;
     private RoleId roleId;
@@ -26,9 +27,10 @@ public class User {
     private int failedLoginAttempts;
     private LocalDateTime lockoutMoment;
 
-    public User(String name, String email, String password, RoleId roleId) {
+    public User(String name, String cpf, String email, String password, RoleId roleId) {
         this.id = new UserId();
         this.name = name;
+        this.cpf = cpf;
         this.email = email;
         this.password = password;
         this.roleId = roleId;

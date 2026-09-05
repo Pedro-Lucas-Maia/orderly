@@ -4,12 +4,17 @@ import bti.pds.dinner.auth.application.input.RegisterInput;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import org.hibernate.validator.constraints.Length;
+import org.hibernate.validator.constraints.br.CPF;
 import org.jspecify.annotations.NonNull;
 
 public record RegisterRequest(
         @NotBlank(message = "Name is required")
         @Length(min = 2,  max = 50, message = "Name must be between 2 and 50 characters")
         String name,
+
+        @NotBlank(message = "CPF is required")
+        @CPF(message = "CPF must be a valid")
+        String cpf,
 
         @NotBlank(message = "Email is required")
         @Email(message = "Invalid email format")
@@ -22,6 +27,7 @@ public record RegisterRequest(
     public static RegisterInput toInput(@NonNull RegisterRequest registerRequest) {
         return new RegisterInput(
                 registerRequest.name(),
+                registerRequest.cpf(),
                 registerRequest.email(),
                 registerRequest.password()
         );

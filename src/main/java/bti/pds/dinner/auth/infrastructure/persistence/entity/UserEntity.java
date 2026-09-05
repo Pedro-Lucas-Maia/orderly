@@ -28,6 +28,8 @@ public class UserEntity {
 
     private String name;
 
+    private String cpf;
+
     private String email;
 
     private String password;
@@ -58,6 +60,7 @@ public class UserEntity {
         return UserEntity.builder()
                 .id(user.getId().uuid())
                 .name(user.getName())
+                .cpf(user.getCpf())
                 .email(user.getEmail())
                 .password(user.getPassword())
                 .roleId(user.getRoleId().uuid())
@@ -73,8 +76,9 @@ public class UserEntity {
     public static User toDomain(@NonNull UserEntity userEntity) {
        return User.builder()
                .id(new UserId(userEntity.getId()))
-               .name(userEntity.getName()).
-               email(userEntity.getEmail())
+               .name(userEntity.getName())
+               .cpf(userEntity.getCpf())
+               .email(userEntity.getEmail())
                .password(userEntity.getPassword())
                .roleId(new RoleId(userEntity.getRoleId()))
                .locked(userEntity.isLocked())
