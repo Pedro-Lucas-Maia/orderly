@@ -57,7 +57,7 @@ public class RegisterService {
 
     private User saveUserToDb(@NonNull RegisterInput registerInput, @NonNull Role role) {
         String encodedPassword = passwordEncoder.encode(registerInput.password());
-        User newUser = new User(registerInput.name(), registerInput.email(), encodedPassword, role.getId());
+        User newUser = new User(registerInput.name(), registerInput.cpf(), registerInput.email(), encodedPassword, role.getId());
         return userRepository.save(newUser);
     }
 

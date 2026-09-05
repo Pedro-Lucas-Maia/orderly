@@ -1,7 +1,9 @@
 package bti.pds.dinner.auth.domain.exception;
 
-public class InvalidProfileUpdateException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+public class InvalidProfileUpdateException extends AuthException {
     public InvalidProfileUpdateException(String message) {
-        super(message);
+        super("Invalid profile update", message, HttpStatus.UNPROCESSABLE_CONTENT);
     }
 }
