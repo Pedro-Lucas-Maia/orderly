@@ -53,4 +53,9 @@ public class JpaUserRepository implements UserRepository {
     public boolean existsByEmail(String email) {
         return repository.existsByEmail(email);
     }
+
+    @Override
+    public boolean existsByCpf(String cpf) {
+        return repository.existsByCpf(cpf);
+    }
 }
