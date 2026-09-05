@@ -4,6 +4,7 @@ import bti.pds.dinner.auth.application.input.RegisterInput;
 import bti.pds.dinner.auth.application.output.UserOutput;
 import bti.pds.dinner.auth.domain.*;
 import bti.pds.dinner.auth.domain.event.OnUserRegisteredEvent;
+import bti.pds.dinner.auth.domain.exception.CpfNotValidException;
 import bti.pds.dinner.auth.domain.exception.EmailNotValidException;
 import bti.pds.dinner.auth.domain.exception.RoleNotFoundException;
 import bti.pds.dinner.auth.domain.exception.UserNotFoundException;
@@ -34,6 +35,7 @@ public class RegisterService {
     @Transactional
     public UserOutput register(@NonNull RegisterInput registerInput) {
         checkEmailUniqueness(registerInput.email());
+        checkCpfUniqueness(registerInput.cpf());
 
         Role role = findRoleOrThrow();
 
@@ -47,6 +49,12 @@ public class RegisterService {
     private void checkEmailUniqueness(String email) {
         if (userRepository.existsByEmail(email)) {
             throw new EmailNotValidException("Email already in use");
+        }
+    }
+
+    private void checkCpfUniqueness(String cpf) {
+        if (userRepository.existsByCpf(cpf)) {
+            throw new CpfNotValidException("Cpf " + cpf + " already exists");
         }
     }
 

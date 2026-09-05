@@ -14,4 +14,5 @@ public interface UserEntityRepository extends CrudRepository<UserEntity, UUID> {
     Optional<UserEntity> findByEmail(String email);
     boolean existsByEmail(String email);
     @NonNull List<UserEntity> findAll();
+    boolean existsByCpf(String cpf);
 }
