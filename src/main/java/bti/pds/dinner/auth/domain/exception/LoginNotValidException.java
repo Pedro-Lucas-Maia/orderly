@@ -1,7 +1,9 @@
 package bti.pds.dinner.auth.domain.exception;
 
-public class LoginNotValidException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+public class LoginNotValidException extends AuthException {
     public LoginNotValidException(String message) {
-        super(message);
+        super("Login not valid", message, HttpStatus.UNAUTHORIZED);
     }
 }

@@ -1,7 +1,9 @@
 package bti.pds.dinner.auth.domain.exception;
 
-public class InvalidPasswordException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+public class InvalidPasswordException extends AuthException {
     public InvalidPasswordException(String message) {
-        super(message);
+        super("Invalid password", message, HttpStatus.UNPROCESSABLE_CONTENT);
     }
 }

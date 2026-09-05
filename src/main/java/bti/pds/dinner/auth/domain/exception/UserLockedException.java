@@ -1,7 +1,9 @@
 package bti.pds.dinner.auth.domain.exception;
 
-public class UserLockedException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+public class UserLockedException extends AuthException {
     public UserLockedException(String message) {
-        super(message);
+        super("User locked", message, HttpStatus.UNAUTHORIZED);
     }
 }
