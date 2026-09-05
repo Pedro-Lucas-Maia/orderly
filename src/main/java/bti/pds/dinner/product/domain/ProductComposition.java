@@ -1,6 +1,6 @@
 package bti.pds.dinner.product.domain;
 
-import bti.pds.dinner.inventory.domain.StockItemId;
+import bti.pds.dinner.stock.domain.StockItemId;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
