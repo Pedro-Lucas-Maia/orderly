@@ -8,6 +8,7 @@ import bti.pds.dinner.sales.domain.SaleRepository;
 import bti.pds.dinner.sales.infrastructure.persistence.entity.SaleEntity;
 import bti.pds.dinner.sales.infrastructure.persistence.entity.SaleItemEntity;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
@@ -66,5 +67,25 @@ public class SaleEntityRepository implements SaleRepository {
         }
 
         return Optional.of(sale);
+    }
+
+    @Override
+    public List<Sale> findAll() {
+        List<SaleEntity> entities = jpaRepository.findAll();
+
+        return entities.stream().map(entity -> {
+            Sale sale = new Sale(
+                    new SaleID(java.util.UUID.fromString(entity.getId())),
+                    entity.getObservation());
+
+            for (SaleItemEntity itemEntity : entity.getItens()) {
+                sale.addItem(
+                        itemEntity.getProductId().toString(),
+                        itemEntity.getQuantity(),
+                        itemEntity.getUnitPrice());
+            }
+
+            return sale;
+        }).toList();
     }
 }
