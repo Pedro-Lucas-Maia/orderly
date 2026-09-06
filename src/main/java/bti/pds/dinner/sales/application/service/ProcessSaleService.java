@@ -1,5 +1,5 @@
 // src/main/java/bti/pds/dinner/sales/application/usecase/ProcessSaleUseCase.java
-package bti.pds.dinner.sales.application.usecase;
+package bti.pds.dinner.sales.application.service;
 
 import bti.pds.dinner.sales.application.request.CreateSaleRequest;
 import bti.pds.dinner.sales.application.request.SaleItemRequest;
@@ -56,11 +56,11 @@ public class ProcessSaleService {
             int currentBalance = stockRepository.getCurrentBalance(stockItemId);
             
             if (currentBalance < requiredQuantity) {
-                throw new IllegalStateException("Estoque insuficiente para o item: " + stockItemId + ". Necessário: " + requiredQuantity);
+                throw new IllegalStateException("Insufficient stock for item: " + stockItemId + ". Required quantity: " + requiredQuantity);
             }
         }
 
-        String reason = "Venda #" + saleId.uuid().toString();
+        String reason = "Sale #" + saleId.uuid().toString();
         for (Map.Entry<String, Integer> entry : totalConsumption.entrySet()) {
             stockRepository.deductStock(entry.getKey(), entry.getValue(), reason);
         }
