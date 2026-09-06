@@ -21,13 +21,13 @@ public class SaleItemEntity {
     private SaleEntity sale;
 
     @Column(name = "produto_id", nullable = false)
-    private Long produtoId; 
+    private Long productId; 
 
     @Column(name = "quantity", nullable = false)
     private int quantity;
 
     @Column(name = "unit_price", nullable = false)
-    private BigDecimal precoUnitario;
+    private BigDecimal unitPrice;
 
     @Column(name = "subtotal", nullable = false)
     private BigDecimal subtotal;

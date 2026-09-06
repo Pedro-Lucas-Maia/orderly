@@ -4,6 +4,9 @@ package bti.pds.dinner.sales.domain;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+import lombok.Getter;
+
+@Getter 
 public class SaleItem {
     
     private String id;

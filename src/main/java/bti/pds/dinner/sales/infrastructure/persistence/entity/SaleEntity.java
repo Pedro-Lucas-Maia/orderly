@@ -35,13 +35,21 @@ public class SaleEntity {
     private SaleStatus status;
 
     @Column(name = "total_value", nullable = false)
-    private BigDecimal valorTotal;
+    private BigDecimal totalValue;
 
     @Column(name = "observation")
     private String observation;
 
     @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SaleItemEntity> itens = new ArrayList<>();
+
+    public SaleEntity(String id, LocalDateTime date, SaleStatus status, BigDecimal totalValue, String observation) {
+        this.id = id;
+        this.date = date;
+        this.status = status;
+        this.totalValue = totalValue;
+        this.observation = observation;
+    }
 
     public void addItem(SaleItemEntity item){
         item.setSale(this);
