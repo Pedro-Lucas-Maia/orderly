@@ -10,7 +10,10 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import java.util.List;
 
 
 @RestController
@@ -25,7 +28,19 @@ public class SaleController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-     // TODO: listSales
-     // TODO: getSaleById
-     // TODO: cancelSale
+    @GetMapping("/api/sales")
+    public List<SaleResponse> listSales() {
+        return saleService.listSales();
+    }
+
+    @GetMapping("/api/sales/{id}")
+    public SaleResponse getSaleById(@PathVariable String id) {
+        return saleService.getSaleById(id);
+    }
+
+    @PostMapping("/api/sales/{id}/cancel")
+    public ResponseEntity<Void> cancelSale(@PathVariable String id) {
+        saleService.cancelSale(id);
+        return ResponseEntity.noContent().build();
+    }
 }
