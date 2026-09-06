@@ -47,4 +47,11 @@ public class Sale {
         }
         this.status = SaleStatus.CONFIRMED;
     }
+
+    public void cancel() {
+        if (this.status == SaleStatus.CANCELLED) {
+            throw new IllegalStateException("Esta venda já está cancelada.");
+        }
+        this.status = SaleStatus.CANCELLED;
+    }
 }
