@@ -23,13 +23,13 @@ public class Sale {
         }
         this.id = id;
         this.date = LocalDateTime.now();
-        this.status = SaleStatus.PENDING;
+        this.status = SaleStatus.PENDENTE;
         this.items = new ArrayList<>();
         this.observation = observation;
     }
 
     public void addItem(String productId, int quantity, BigDecimal unitPrice) {
-        if (this.status != SaleStatus.PENDING) {
+        if (this.status != SaleStatus.PENDENTE) {
             throw new IllegalStateException("Items can only be added to pending sales.");
         }
         this.items.add(new SaleItem(productId, quantity, unitPrice));
@@ -42,16 +42,16 @@ public class Sale {
     }
 
     public void confirm() {
-        if (this.status != SaleStatus.PENDING) {
+        if (this.status != SaleStatus.PENDENTE) {
             throw new IllegalStateException("Only pending sales can be confirmed.");
         }
-        this.status = SaleStatus.CONFIRMED;
+        this.status = SaleStatus.CONFIRMADA;
     }
 
     public void cancel() {
-        if (this.status == SaleStatus.CANCELLED) {
+        if (this.status == SaleStatus.CANCELADA) {
             throw new IllegalStateException("Esta venda já está cancelada.");
         }
-        this.status = SaleStatus.CANCELLED;
+        this.status = SaleStatus.CANCELADA;
     }
 }

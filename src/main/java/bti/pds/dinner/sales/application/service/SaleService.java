@@ -30,6 +30,9 @@ public class SaleService {
 
     @Transactional
     public SaleResponse execute(CreateSaleRequest request) {
+        if (request == null || request.items() == null || request.items().isEmpty()) {
+            throw new IllegalArgumentException("A sale must contain at least one item.");
+        }
         SaleID saleId = new SaleID();
         Sale sale = new Sale(saleId, request.observation());
 
@@ -39,10 +42,11 @@ public class SaleService {
             bti.pds.dinner.product.domain.ProductId productId = new bti.pds.dinner.product.domain.ProductId(
                     Long.parseLong(itemReq.productId()));
 
-            BigDecimal currentPrice = productRepository.getCurrentPrice(productId.toString());
+            String productIdValue = productId.value().toString();
+            BigDecimal currentPrice = productRepository.getCurrentPrice(productIdValue);
             sale.addItem(itemReq.productId(), itemReq.quantity(), currentPrice);
 
-            List<RecipeItem> recipe = productRepository.getRecipe(productId.toString());
+            List<RecipeItem> recipe = productRepository.getRecipe(productIdValue);
             for (RecipeItem ingredient : recipe) {
                 int consumedQuantity = ingredient.quantityPerUnit() * itemReq.quantity();
 
@@ -70,7 +74,7 @@ public class SaleService {
         sale.confirm();
         saleRepository.save(sale);
 
-        return new SaleResponse(sale.getId().uuid().toString(), sale.calculateTotal());
+        return toResponse(sale);
     }
 
     @Transactional
@@ -80,8 +84,8 @@ public class SaleService {
         Sale sale = saleRepository.findById(saleId)
                 .orElseThrow(() -> new IllegalArgumentException("Sale not found: " + saleIdStr));
 
-        if (sale.getStatus() != SaleStatus.CONFIRMED) {
-            throw new IllegalStateException("Only CONFIRMED sales can be cancelled.");
+        if (sale.getStatus() != SaleStatus.CONFIRMADA) {
+            throw new IllegalStateException("Only CONFIRMADA sales can be cancelled.");
         }
 
         Map<String, Integer> totalToReturn = new HashMap<>();
@@ -90,7 +94,7 @@ public class SaleService {
             bti.pds.dinner.product.domain.ProductId productId = new bti.pds.dinner.product.domain.ProductId(
                     Long.parseLong(item.getProductId()));
 
-            List<RecipeItem> recipe = productRepository.getRecipe(productId.toString());
+            List<RecipeItem> recipe = productRepository.getRecipe(productId.value().toString());
 
             for (RecipeItem ingredient : recipe) {
                 int quantityToReturn = ingredient.quantityPerUnit() * item.getQuantity();
@@ -112,9 +116,28 @@ public class SaleService {
         List<Sale> sales = saleRepository.findAll();
 
         return sales.stream()
-                .map(sale -> new SaleResponse(
-                        sale.getId().uuid().toString(),
-                        sale.calculateTotal()))
+                .map(this::toResponse)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public SaleResponse getSaleById(String saleIdStr) {
+        SaleID saleId = new SaleID(UUID.fromString(saleIdStr));
+        Sale sale = saleRepository.findById(saleId)
+                .orElseThrow(() -> new IllegalArgumentException("Sale not found: " + saleIdStr));
+        return toResponse(sale);
+    }
+
+    private SaleResponse toResponse(Sale sale) {
+        return new SaleResponse(
+                sale.getId().uuid().toString(),
+                sale.getDate(),
+                sale.getStatus(),
+                sale.calculateTotal(),
+                sale.getObservation(),
+                sale.getItems().stream()
+                        .map(item -> new bti.pds.dinner.sales.application.response.SaleItemResponse(
+                                item.getProductId(), item.getQuantity(), item.getUnitPrice(), item.getSubtotal()))
+                        .toList());
     }
 }

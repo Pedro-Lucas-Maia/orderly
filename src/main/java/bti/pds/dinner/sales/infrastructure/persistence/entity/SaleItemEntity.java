@@ -6,10 +6,12 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "sale_item")
+@Table(name = "sale_items")
 @AllArgsConstructor
+@NoArgsConstructor
 @Setter 
 @Getter
 public class SaleItemEntity {

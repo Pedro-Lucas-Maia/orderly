@@ -15,9 +15,12 @@ public class SaleItem {
     private BigDecimal unitPrice;
 
     public SaleItem(String productId, int quantity, BigDecimal unitPrice) {
+        this(UUID.randomUUID().toString(), productId, quantity, unitPrice);
+    }
+
+    public SaleItem(String id, String productId, int quantity, BigDecimal unitPrice) {
         validate(quantity, unitPrice);
-        
-        this.id = UUID.randomUUID().toString();
+        this.id = id;
         this.productId = productId;
         this.quantity = quantity;
         this.unitPrice = unitPrice;

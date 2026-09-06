@@ -57,13 +57,19 @@ public class SaleEntityRepository implements SaleRepository {
 
         SaleEntity entity = entityOpt.get();
 
-        Sale sale = new Sale(new SaleID(java.util.UUID.fromString(entity.getId())), entity.getObservation());
+        Sale sale = new Sale(
+                new SaleID(java.util.UUID.fromString(entity.getId())),
+                entity.getDate(),
+                entity.getStatus(),
+                new java.util.ArrayList<>(),
+                entity.getObservation());
 
         for (SaleItemEntity itemEntity : entity.getItens()) {
-            sale.addItem(
+            sale.getItems().add(new SaleItem(
+                    itemEntity.getId(),
                     itemEntity.getProductId().toString(),
                     itemEntity.getQuantity(),
-                    itemEntity.getUnitPrice());
+                    itemEntity.getUnitPrice()));
         }
 
         return Optional.of(sale);
@@ -76,13 +82,17 @@ public class SaleEntityRepository implements SaleRepository {
         return entities.stream().map(entity -> {
             Sale sale = new Sale(
                     new SaleID(java.util.UUID.fromString(entity.getId())),
+                    entity.getDate(),
+                    entity.getStatus(),
+                    new java.util.ArrayList<>(),
                     entity.getObservation());
 
             for (SaleItemEntity itemEntity : entity.getItens()) {
-                sale.addItem(
+                sale.getItems().add(new SaleItem(
+                        itemEntity.getId(),
                         itemEntity.getProductId().toString(),
                         itemEntity.getQuantity(),
-                        itemEntity.getUnitPrice());
+                        itemEntity.getUnitPrice()));
             }
 
             return sale;
