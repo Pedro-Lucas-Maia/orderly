@@ -1,12 +1,16 @@
 package bti.pds.dinner.sales.infrastructure.persistence.entity;
 
-import java.math.BigDecimal;
-
+import bti.pds.dinner.sales.domain.SaleItem;
+import bti.pds.dinner.sales.domain.SaleItemId;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.jspecify.annotations.NonNull;
+
+import java.math.BigDecimal;
+import java.util.UUID;
 
 @Entity
 @Table(name = "sale_items")
@@ -23,7 +27,7 @@ public class SaleItemEntity {
     private SaleEntity sale;
 
     @Column(name = "product_id", nullable = false)
-    private Long productId; 
+    private String productId;
 
     @Column(name = "quantity", nullable = false)
     private int quantity;
@@ -33,4 +37,13 @@ public class SaleItemEntity {
 
     @Column(name = "subtotal", nullable = false)
     private BigDecimal subtotal;
+
+    public static SaleItem toDomain(@NonNull SaleItemEntity entity) {
+        return new SaleItem(
+            new SaleItemId(UUID.fromString(entity.getId())),
+                entity.getProductId(),
+                entity.getQuantity(),
+                entity.getUnitPrice()
+        );
+    }
 }

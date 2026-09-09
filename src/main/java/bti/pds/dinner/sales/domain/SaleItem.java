@@ -1,30 +1,24 @@
 // domain/model/SaleItem.java
 package bti.pds.dinner.sales.domain;
 
-import java.math.BigDecimal;
-import java.util.UUID;
-
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-@Getter 
+import java.math.BigDecimal;
+
+@Getter
+@AllArgsConstructor
 public class SaleItem {
     
-    private String id;
+    private SaleItemId id;
     private String productId;
     private int quantity;
     private BigDecimal unitPrice;
 
     public SaleItem(String productId, int quantity, BigDecimal unitPrice) {
-        this(UUID.randomUUID().toString(), productId, quantity, unitPrice);
+        this(new SaleItemId(), productId, quantity, unitPrice);
     }
 
-    public SaleItem(String id, String productId, int quantity, BigDecimal unitPrice) {
-        validate(quantity, unitPrice);
-        this.id = id;
-        this.productId = productId;
-        this.quantity = quantity;
-        this.unitPrice = unitPrice;
-    }
 
     private void validate(int quantity, BigDecimal unitPrice) {
         if (quantity <= 0) {

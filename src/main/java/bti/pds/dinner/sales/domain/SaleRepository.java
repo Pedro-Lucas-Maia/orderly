@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface SaleRepository {
-    void save(Sale sale);
+    Sale save(Sale sale);
     Optional<Sale> findById(SaleID id);
     List<Sale> findAll();
 }

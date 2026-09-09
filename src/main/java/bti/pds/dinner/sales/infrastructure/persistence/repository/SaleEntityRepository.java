@@ -3,15 +3,13 @@ package bti.pds.dinner.sales.infrastructure.persistence.repository;
 
 import bti.pds.dinner.sales.domain.Sale;
 import bti.pds.dinner.sales.domain.SaleID;
-import bti.pds.dinner.sales.domain.SaleItem;
 import bti.pds.dinner.sales.domain.SaleRepository;
 import bti.pds.dinner.sales.infrastructure.persistence.entity.SaleEntity;
-import bti.pds.dinner.sales.infrastructure.persistence.entity.SaleItemEntity;
+import org.jspecify.annotations.NonNull;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-
-import org.springframework.stereotype.Repository;
 
 @Repository
 public class SaleEntityRepository implements SaleRepository {
@@ -23,79 +21,21 @@ public class SaleEntityRepository implements SaleRepository {
     }
 
     @Override
-    public void save(Sale sale) {
-
-        SaleEntity entity = new SaleEntity(
-                sale.getId().uuid().toString(),
-                sale.getDate(),
-                sale.getStatus(),
-                sale.calculateTotal(),
-                sale.getObservation());
-
-        for (SaleItem item : sale.getItems()) {
-            SaleItemEntity itemEntity = new SaleItemEntity(
-                    item.getId(),
-                    entity,
-                    Long.parseLong(item.getProductId()),
-                    item.getQuantity(),
-                    item.getUnitPrice(),
-                    item.getSubtotal());
-
-            entity.addItem(itemEntity);
-        }
-
-        jpaRepository.save(entity);
+    public Sale save(Sale sale) {
+        return SaleEntity.toDomain(jpaRepository.save(SaleEntity.from(sale)));
     }
 
     @Override
-    public Optional<Sale> findById(SaleID id) {
-        Optional<SaleEntity> entityOpt = jpaRepository.findById(id.uuid().toString());
-
-        if (entityOpt.isEmpty()) {
-            return Optional.empty();
-        }
-
-        SaleEntity entity = entityOpt.get();
-
-        Sale sale = new Sale(
-                new SaleID(java.util.UUID.fromString(entity.getId())),
-                entity.getDate(),
-                entity.getStatus(),
-                new java.util.ArrayList<>(),
-                entity.getObservation());
-
-        for (SaleItemEntity itemEntity : entity.getItens()) {
-            sale.getItems().add(new SaleItem(
-                    itemEntity.getId(),
-                    itemEntity.getProductId().toString(),
-                    itemEntity.getQuantity(),
-                    itemEntity.getUnitPrice()));
-        }
-
-        return Optional.of(sale);
+    public Optional<Sale> findById(@NonNull SaleID id) {
+        return jpaRepository.findById(id.uuid().toString())
+                .map(SaleEntity::toDomain);
     }
 
     @Override
     public List<Sale> findAll() {
-        List<SaleEntity> entities = jpaRepository.findAll();
-
-        return entities.stream().map(entity -> {
-            Sale sale = new Sale(
-                    new SaleID(java.util.UUID.fromString(entity.getId())),
-                    entity.getDate(),
-                    entity.getStatus(),
-                    new java.util.ArrayList<>(),
-                    entity.getObservation());
-
-            for (SaleItemEntity itemEntity : entity.getItens()) {
-                sale.getItems().add(new SaleItem(
-                        itemEntity.getId(),
-                        itemEntity.getProductId().toString(),
-                        itemEntity.getQuantity(),
-                        itemEntity.getUnitPrice()));
-            }
-
-            return sale;
-        }).toList();
+        return jpaRepository.findAll()
+                .stream()
+                .map(SaleEntity::toDomain)
+                .toList();
     }
 }

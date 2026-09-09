@@ -1,12 +1,12 @@
 package bti.pds.dinner.sales.domain;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 
 @AllArgsConstructor
 @Getter
@@ -17,11 +17,8 @@ public class Sale {
     private List<SaleItem> items;
     private String observation;
 
-    public Sale(SaleID id, String observation) {
-        if (id == null) {
-            throw new IllegalArgumentException("Sale ID cannot be null.");
-        }
-        this.id = id;
+    public Sale(String observation) {
+        this.id = new SaleID();
         this.date = LocalDateTime.now();
         this.status = SaleStatus.PENDENTE;
         this.items = new ArrayList<>();
