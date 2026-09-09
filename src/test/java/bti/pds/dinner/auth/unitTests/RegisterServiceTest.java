@@ -48,7 +48,7 @@ public class RegisterServiceTest {
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        this.registerInput = new RegisterInput("Joãozinho", "joaozinho@gmail.com", "12345678");
+        this.registerInput = new RegisterInput("Joãozinho", "123.456.789-09", "joaozinho@gmail.com", "12345678");
     }
 
     @Test

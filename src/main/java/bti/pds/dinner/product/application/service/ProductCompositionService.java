@@ -1,8 +1,5 @@
 package bti.pds.dinner.product.application.service;
 
-import bti.pds.dinner.inventory.domain.StockItemId;
-import bti.pds.dinner.inventory.domain.StockItemRepository;
-import bti.pds.dinner.inventory.domain.exception.StockItemNotFoundException;
 import bti.pds.dinner.product.application.input.AddProductCompositionInput;
 import bti.pds.dinner.product.application.output.ProductCompositionOutput;
 import bti.pds.dinner.product.domain.ProductComposition;
@@ -10,6 +7,10 @@ import bti.pds.dinner.product.domain.ProductCompositionRepository;
 import bti.pds.dinner.product.domain.ProductId;
 import bti.pds.dinner.product.domain.ProductRepository;
 import bti.pds.dinner.product.domain.exception.ProductNotFoundException;
+import bti.pds.dinner.stock.domain.StockItemId;
+import bti.pds.dinner.stock.domain.StockItemRepository;
+import bti.pds.dinner.stock.domain.exception.StockItemNotFoundException;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
