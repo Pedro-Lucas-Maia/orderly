@@ -1,4 +1,4 @@
-package bti.pds.dinner.sales.infrastructure.http;
+package bti.pds.dinner.sales.infrastructure.http.controller;
 
 import java.time.LocalDateTime;
 
