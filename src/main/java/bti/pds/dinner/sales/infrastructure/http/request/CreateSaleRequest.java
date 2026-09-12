@@ -18,7 +18,7 @@ public record CreateSaleRequest(
     public static CreateSaleInput toInput(@NonNull CreateSaleRequest request) {
         return new CreateSaleInput(
                 request.observation(),
-                request.items
+                request.items()
                         .stream()
                         .map(SaleItemRequest::toInput)
                         .toList()
