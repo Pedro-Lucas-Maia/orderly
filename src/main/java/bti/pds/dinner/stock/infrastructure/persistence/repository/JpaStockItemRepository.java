@@ -32,6 +32,12 @@ public class JpaStockItemRepository implements StockItemRepository {
     }
 
     @Override
+    public Optional<StockItem> findByIdForUpdate(@NonNull StockItemId id) {
+        return repository.findByIdForUpdate(id.value())
+                .map(StockItemEntity::toDomain);
+    }
+
+    @Override
     public List<StockItem> findByStockId(@NonNull StockId stockId) {
         return repository.findByStockId(stockId.value())
                 .stream()

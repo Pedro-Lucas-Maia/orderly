@@ -6,6 +6,7 @@ import java.util.Optional;
 public interface StockItemRepository {
     StockItem save(StockItem stockItem);
     Optional<StockItem> findById(StockItemId id);
+    Optional<StockItem> findByIdForUpdate(StockItemId id);
     List<StockItem> findByStockId(StockId stockId);
     List<StockItem> findAll();
     void delete(StockItem stockItem);
