@@ -31,7 +31,7 @@ public class SalesProductRepositoryAdapter implements ProductRepository {
     @Override
     public List<RecipeItem> getRecipe(String productId) {
         ProductId id = new ProductId(parseId(productId, "product"));
-        findActiveProduct(id);
+        findProduct(id);
         return compositionRepository.findByProductId(id).stream()
                 .map(composition -> new RecipeItem(
                         composition.getStockItemId().value().toString(),
@@ -44,12 +44,19 @@ public class SalesProductRepositoryAdapter implements ProductRepository {
     }
 
     private Product findActiveProduct(ProductId productId) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new IllegalArgumentException("Product not found: " + productId.value()));
+        Product product = findProduct(productId);
+        if (product.isDeleted()) {
+            throw new IllegalStateException("Product is deleted: " + productId.value());
+        }
         if (!product.isActive()) {
             throw new IllegalStateException("Product is inactive: " + productId.value());
         }
         return product;
+    }
+
+    private Product findProduct(ProductId productId) {
+        return productRepository.findById(productId)
+                .orElseThrow(() -> new IllegalArgumentException("Product not found: " + productId.value()));
     }
 
     private Long parseId(String value, String resource) {

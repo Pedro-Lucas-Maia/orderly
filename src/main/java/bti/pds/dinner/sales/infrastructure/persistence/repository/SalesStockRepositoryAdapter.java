@@ -49,6 +49,9 @@ public class SalesStockRepositoryAdapter implements StockRepository {
 
     private StockItemEntity findActiveItemForUpdate(String stockItemId) {
         StockItemEntity item = findItemForUpdate(stockItemId);
+        if (item.getDeletedAt() != null) {
+            throw new IllegalStateException("Stock item is deleted: " + stockItemId);
+        }
         if (!item.isActive()) {
             throw new IllegalStateException("Stock item is inactive: " + stockItemId);
         }
