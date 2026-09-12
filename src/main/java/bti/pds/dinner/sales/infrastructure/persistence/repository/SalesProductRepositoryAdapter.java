@@ -5,58 +5,36 @@ import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
-import bti.pds.dinner.product.domain.Product;
-import bti.pds.dinner.product.domain.ProductCompositionRepository;
-import bti.pds.dinner.product.domain.ProductId;
+import bti.pds.dinner.product.application.service.ProductCompositionService;
+import bti.pds.dinner.product.application.service.ProductService;
 import bti.pds.dinner.sales.domain.ProductRepository;
 import bti.pds.dinner.sales.domain.RecipeItem;
 
 @Repository
 public class SalesProductRepositoryAdapter implements ProductRepository {
-    private final bti.pds.dinner.product.domain.ProductRepository productRepository;
-    private final ProductCompositionRepository compositionRepository;
+    private final ProductService productService;
+    private final ProductCompositionService productCompositionService;
 
     public SalesProductRepositoryAdapter(
-            bti.pds.dinner.product.domain.ProductRepository productRepository,
-            ProductCompositionRepository compositionRepository) {
-        this.productRepository = productRepository;
-        this.compositionRepository = compositionRepository;
+            ProductService productService,
+            ProductCompositionService productCompositionService) {
+        this.productService = productService;
+        this.productCompositionService = productCompositionService;
     }
 
     @Override
-    public BigDecimal getCurrentPrice(String productId) {
-        return findActiveProduct(productId).getPrice();
+    public BigDecimal getCurrentPrice(Long productId) {
+        return productService.getActiveProductPrice(productId);
     }
 
     @Override
-    public List<RecipeItem> getRecipe(String productId) {
-        ProductId id = new ProductId(parseId(productId, "product"));
-        findActiveProduct(id);
-        return compositionRepository.findByProductId(id).stream()
-                .map(composition -> new RecipeItem(
-                        composition.getStockItemId().value().toString(),
-                        composition.getQuantity()))
+    public List<RecipeItem> getRecipe(Long productId) {
+        productService.getActiveProductPrice(productId);
+
+        return productCompositionService.listByProduct(productId).stream()
+                .map(output -> new RecipeItem(
+                        output.stockItemId(),
+                        output.quantity()))
                 .toList();
-    }
-
-    private Product findActiveProduct(String productId) {
-        return findActiveProduct(new ProductId(parseId(productId, "product")));
-    }
-
-    private Product findActiveProduct(ProductId productId) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new IllegalArgumentException("Product not found: " + productId.value()));
-        if (!product.isActive()) {
-            throw new IllegalStateException("Product is inactive: " + productId.value());
-        }
-        return product;
-    }
-
-    private Long parseId(String value, String resource) {
-        try {
-            return Long.valueOf(value);
-        } catch (NumberFormatException exception) {
-            throw new IllegalArgumentException("Invalid " + resource + " id: " + value, exception);
-        }
     }
 }
