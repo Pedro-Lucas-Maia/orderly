@@ -8,7 +8,7 @@ CREATE TABLE sales (
 
 CREATE TABLE sale_items (
     id UUID PRIMARY KEY,
-    sale_id VARCHAR(36) NOT NULL REFERENCES sales(id) ON DELETE CASCADE,
+    sale_id UUID NOT NULL REFERENCES sales(id) ON DELETE CASCADE,
     product_id BIGINT NOT NULL REFERENCES products(id),
     quantity INT NOT NULL CHECK (quantity > 0),
     unit_price NUMERIC(12, 2) NOT NULL CHECK (unit_price >= 0),
