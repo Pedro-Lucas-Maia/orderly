@@ -1,15 +1,17 @@
 package bti.pds.dinner.sales.application.service;
 
-import bti.pds.dinner.product.domain.ProductId;
 import bti.pds.dinner.sales.application.input.CreateSaleInput;
 import bti.pds.dinner.sales.application.input.SaleItemInput;
+import bti.pds.dinner.sales.application.output.SaleItemOutput;
 import bti.pds.dinner.sales.application.output.SaleOutput;
 import bti.pds.dinner.sales.domain.*;
+import bti.pds.dinner.sales.domain.exception.InvalidSaleStateException;
+import bti.pds.dinner.sales.domain.exception.SaleException;
+import bti.pds.dinner.sales.domain.exception.SaleNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +38,7 @@ public class SaleService {
         Sale sale = new Sale(input.observation());
         addItemsToSale(sale, input.items());
 
-        Map<String, Integer> totalConsumption = calculateTotalConsumption(input.items());
+        Map<Long, Integer> totalConsumption = calculateTotalConsumption(input.items());
         validateStockAvailability(totalConsumption);
 
         String reason = "Sale #" + sale.getId().uuid().toString();
@@ -44,15 +46,14 @@ public class SaleService {
 
         sale.confirm();
 
-
-        return SaleOutput.from(saleRepository.save(sale)    , LocalDateTime.now());
+        return toOutput(saleRepository.save(sale));
     }
 
     @Transactional
     public void cancelSale(String saleIdStr) {
         Sale sale = findConfirmedSale(saleIdStr);
 
-        Map<String, Integer> totalToReturn = calculateConsumptionFromSale(sale);
+        Map<Long, Integer> totalToReturn = calculateConsumptionFromSale(sale);
 
         String reason = "Cancel sale #" + saleIdStr;
         restoreStock(totalToReturn, reason);
@@ -65,54 +66,49 @@ public class SaleService {
     public List<SaleOutput> listSales() {
         return saleRepository.findAll()
                 .stream()
-                .map(sale -> SaleOutput.from(sale, LocalDateTime.now()))
+                .map(this::toOutput)
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public SaleOutput getSaleById(String saleIdStr) {
-        SaleID saleId = new SaleID(UUID.fromString(saleIdStr));
+        SaleId saleId = new SaleId(UUID.fromString(saleIdStr));
         Sale sale = saleRepository.findById(saleId)
-                .orElseThrow(() -> new IllegalArgumentException("Sale not found: " + saleIdStr));
-        return SaleOutput.from(sale, LocalDateTime.now());
+                .orElseThrow(() -> new SaleNotFoundException("Sale not found: " + saleIdStr));
+        return toOutput(sale);
     }
-
 
     private void validateInput(CreateSaleInput input) {
         if (input == null || input.items() == null || input.items().isEmpty()) {
-            throw new IllegalArgumentException("A sale must contain at least one item.");
+            throw new SaleException("A sale must contain at least one item.");
         }
     }
 
-
     private void addItemsToSale(Sale sale, List<SaleItemInput> items) {
         for (SaleItemInput itemReq : items) {
-            String productId = resolveProductId(itemReq.productId());
-            BigDecimal currentPrice = productRepository.getCurrentPrice(productId);
+            BigDecimal currentPrice = productRepository.getCurrentPrice(itemReq.productId());
             sale.addItem(itemReq.productId(), itemReq.quantity(), currentPrice);
         }
     }
 
-    private Map<String, Integer> calculateTotalConsumption(List<SaleItemInput> items) {
-        Map<String, Integer> totalConsumption = new HashMap<>();
+    private Map<Long, Integer> calculateTotalConsumption(List<SaleItemInput> items) {
+        Map<Long, Integer> totalConsumption = new HashMap<>();
         for (SaleItemInput itemReq : items) {
-            String productId = resolveProductId(itemReq.productId());
-            accumulateConsumption(totalConsumption, productId, itemReq.quantity());
+            accumulateConsumption(totalConsumption, itemReq.productId(), itemReq.quantity());
         }
         return totalConsumption;
     }
 
-    private Map<String, Integer> calculateConsumptionFromSale(Sale sale) {
-        Map<String, Integer> totalConsumption = new HashMap<>();
+    private Map<Long, Integer> calculateConsumptionFromSale(Sale sale) {
+        Map<Long, Integer> totalConsumption = new HashMap<>();
         for (SaleItem item : sale.getItems()) {
-            String productId = resolveProductId(item.getProductId());
-            accumulateConsumption(totalConsumption, productId, item.getQuantity());
+            accumulateConsumption(totalConsumption, item.getProductId(), item.getQuantity());
         }
         return totalConsumption;
     }
 
-    private void accumulateConsumption(Map<String, Integer> totalConsumption,
-            String productId, int quantity) {
+    private void accumulateConsumption(Map<Long, Integer> totalConsumption,
+            Long productId, int quantity) {
         List<RecipeItem> recipe = productRepository.getRecipe(productId);
         for (RecipeItem ingredient : recipe) {
             int consumedQuantity = ingredient.quantityPerUnit() * quantity;
@@ -120,47 +116,64 @@ public class SaleService {
         }
     }
 
-    private void validateStockAvailability(Map<String, Integer> totalConsumption) {
-        for (Map.Entry<String, Integer> entry : totalConsumption.entrySet()) {
-            String stockItemId = entry.getKey();
+    private void validateStockAvailability(Map<Long, Integer> totalConsumption) {
+        for (Map.Entry<Long, Integer> entry : totalConsumption.entrySet()) {
+            Long stockItemId = entry.getKey();
             int requiredQuantity = entry.getValue();
             int currentBalance = stockRepository.getCurrentBalance(stockItemId);
 
             if (currentBalance < requiredQuantity) {
-                throw new IllegalStateException(
+                throw new InvalidSaleStateException(
                         "Insufficient stock for item: " + stockItemId
                                 + ". Required quantity: " + requiredQuantity);
             }
         }
     }
 
-    private void deductStock(Map<String, Integer> totalConsumption, String reason) {
-        for (Map.Entry<String, Integer> entry : totalConsumption.entrySet()) {
+    private void deductStock(Map<Long, Integer> totalConsumption, String reason) {
+        for (Map.Entry<Long, Integer> entry : totalConsumption.entrySet()) {
             stockRepository.deductStock(entry.getKey(), entry.getValue(), reason);
         }
     }
 
-    private void restoreStock(Map<String, Integer> totalToReturn, String reason) {
-        for (Map.Entry<String, Integer> entry : totalToReturn.entrySet()) {
+    private void restoreStock(Map<Long, Integer> totalToReturn, String reason) {
+        for (Map.Entry<Long, Integer> entry : totalToReturn.entrySet()) {
             stockRepository.addStock(entry.getKey(), entry.getValue(), reason);
         }
     }
 
     private Sale findConfirmedSale(String saleIdStr) {
-        SaleID saleId = new SaleID(UUID.fromString(saleIdStr));
+        SaleId saleId = new SaleId(UUID.fromString(saleIdStr));
 
         Sale sale = saleRepository.findById(saleId)
-                .orElseThrow(() -> new IllegalArgumentException("Sale not found: " + saleIdStr));
+                .orElseThrow(() -> new SaleNotFoundException("Sale not found: " + saleIdStr));
 
-        if (sale.getStatus() != SaleStatus.CONFIRMADA) {
-            throw new IllegalStateException("Only CONFIRMADA sales can be cancelled.");
+        if (sale.getStatus() != SaleStatus.CONFIRMED) {
+            throw new InvalidSaleStateException("Only CONFIRMED sales can be cancelled.");
         }
 
         return sale;
     }
 
-    private String resolveProductId(String rawProductId) {
-        ProductId productId = new ProductId(Long.parseLong(rawProductId));
-        return productId.value().toString();
+    private SaleOutput toOutput(Sale sale) {
+        return new SaleOutput(
+                sale.getId().uuid().toString(),
+                sale.getDate(),
+                sale.getStatus(),
+                sale.calculateTotal(),
+                sale.getObservation(),
+                sale.getItems().stream()
+                        .map(this::toItemOutput)
+                        .toList()
+        );
+    }
+
+    private SaleItemOutput toItemOutput(SaleItem item) {
+        return new SaleItemOutput(
+                item.getProductId(),
+                item.getQuantity(),
+                item.getUnitPrice(),
+                item.getSubtotal()
+        );
     }
 }
