@@ -1,7 +1,7 @@
 package bti.pds.dinner.sales.infrastructure.persistence.entity;
 
 import bti.pds.dinner.sales.domain.Sale;
-import bti.pds.dinner.sales.domain.SaleID;
+import bti.pds.dinner.sales.domain.SaleId;
 import bti.pds.dinner.sales.domain.SaleStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -24,7 +24,7 @@ import java.util.UUID;
 @Table(name = "sales")
 public class SaleEntity {
     @Id 
-    private String id;
+    private UUID id;
 
     @Column(name = "date", nullable = false)
     private LocalDateTime date;
@@ -40,9 +40,9 @@ public class SaleEntity {
     private String observation;
 
     @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<SaleItemEntity> itens = new ArrayList<>();
+    private List<SaleItemEntity> items = new ArrayList<>();
 
-    public SaleEntity(String id, LocalDateTime date, SaleStatus status, BigDecimal totalValue, String observation) {
+    public SaleEntity(UUID id, LocalDateTime date, SaleStatus status, BigDecimal totalValue, String observation) {
         this.id = id;
         this.date = date;
         this.status = status;
@@ -52,28 +52,42 @@ public class SaleEntity {
 
     public void addItem(@NonNull SaleItemEntity item){
         item.setSale(this);
-        this.itens.add(item);
+        this.items.add(item);
     }
 
     public static Sale toDomain(@NonNull SaleEntity entity) {
         return new Sale(
-                new SaleID(UUID.fromString(entity.getId())),
+                new SaleId(entity.getId()),
                 entity.getDate(),
                 entity.getStatus(),
-                entity.itens.stream()
+                entity.items.stream()
                         .map(SaleItemEntity::toDomain)
                         .toList(),
-                entity.observation
-
+                entity.getObservation()
         );
     }
+    
     public static SaleEntity from(@NonNull Sale sale) {
-        return new SaleEntity(
-                sale.getId().uuid().toString(),
+        SaleEntity entity = new SaleEntity(
+                sale.getId().uuid(),
                 sale.getDate(),
                 sale.getStatus(),
                 sale.calculateTotal(),
                 sale.getObservation()
         );
+        if (sale.getItems() != null) {
+            sale.getItems().forEach(item -> {
+                SaleItemEntity itemEntity = new SaleItemEntity(
+                        item.getId().uuid(),
+                        entity,
+                        item.getProductId(),
+                        item.getQuantity(),
+                        item.getUnitPrice(),
+                        item.getSubtotal()
+                );
+                entity.addItem(itemEntity);
+            });
+        }
+        return entity;
     }
 }
