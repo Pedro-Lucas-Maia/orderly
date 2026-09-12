@@ -9,4 +9,8 @@ import java.util.List;
 @Repository
 public interface ProductCompositionEntityRepository extends CrudRepository<ProductCompositionEntity, Long> {
     List<ProductCompositionEntity> findByProductId(Long productId);
+
+    void deleteByProductId(Long productId);
+
+    void deleteByStockItemId(Long stockItemId);
 }
