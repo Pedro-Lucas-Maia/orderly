@@ -3,6 +3,7 @@ package bti.pds.dinner.sales.infrastructure.http;
 import bti.pds.dinner.sales.application.service.SaleService;
 import bti.pds.dinner.sales.infrastructure.http.request.CreateSaleRequest;
 import bti.pds.dinner.sales.infrastructure.http.response.SaleResponse;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +18,7 @@ public class SaleController {
     private final SaleService saleService;
 
     @PostMapping("/api/sales")
-    public ResponseEntity<SaleResponse> createSale(@RequestBody CreateSaleRequest request) {
+    public ResponseEntity<SaleResponse> createSale(@RequestBody @Valid CreateSaleRequest request) {
         SaleResponse response = SaleResponse.from(saleService.createSale(CreateSaleRequest.toInput(request)));
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
