@@ -20,14 +20,14 @@ import java.util.UUID;
 @Getter
 public class SaleItemEntity {
     @Id
-    private String id;
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sale_id", nullable = false)
     private SaleEntity sale;
 
     @Column(name = "product_id", nullable = false)
-    private String productId;
+    private Long productId;
 
     @Column(name = "quantity", nullable = false)
     private int quantity;
@@ -40,7 +40,7 @@ public class SaleItemEntity {
 
     public static SaleItem toDomain(@NonNull SaleItemEntity entity) {
         return new SaleItem(
-            new SaleItemId(UUID.fromString(entity.getId())),
+            new SaleItemId(entity.getId()),
                 entity.getProductId(),
                 entity.getQuantity(),
                 entity.getUnitPrice()
