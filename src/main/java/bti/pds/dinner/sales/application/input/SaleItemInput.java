@@ -1,7 +1,7 @@
 package bti.pds.dinner.sales.application.input;
 
 public record SaleItemInput(
-    String productId,
+    Long productId,
     int quantity
 ) {
 }

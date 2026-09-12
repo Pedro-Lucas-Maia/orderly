@@ -6,7 +6,7 @@ import org.jspecify.annotations.NonNull;
 import java.math.BigDecimal;
 
 public record SaleItemResponse(
-        String productId,
+        Long productId,
         int quantity,
         BigDecimal unitPrice,
         BigDecimal subtotal
