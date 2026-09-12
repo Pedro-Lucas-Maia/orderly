@@ -9,6 +9,7 @@ import bti.pds.dinner.product.domain.exception.ProductNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -37,6 +38,19 @@ public class ProductService {
         Product product = productRepository.findById(new ProductId(id))
                 .orElseThrow(() -> new ProductNotFoundException("Product not found"));
         return toOutput(product);
+    }
+
+    public BigDecimal getActiveProductPrice(Long id) {
+        return findActiveProduct(id).getPrice();
+    }
+
+    private Product findActiveProduct(Long id) {
+        Product product = productRepository.findById(new ProductId(id))
+                .orElseThrow(() -> new ProductNotFoundException("Product not found: " + id));
+        if (!product.isActive()) {
+            throw new IllegalStateException("Product is inactive: " + id);
+        }
+        return product;
     }
 
     private ProductOutput toOutput(Product product) {
