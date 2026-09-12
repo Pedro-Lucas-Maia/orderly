@@ -5,6 +5,6 @@ import java.util.Optional;
 
 public interface SaleRepository {
     Sale save(Sale sale);
-    Optional<Sale> findById(SaleID id);
+    Optional<Sale> findById(SaleId id);
     List<Sale> findAll();
 }
