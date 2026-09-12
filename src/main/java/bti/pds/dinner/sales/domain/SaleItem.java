@@ -1,31 +1,33 @@
-// domain/model/SaleItem.java
 package bti.pds.dinner.sales.domain;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import bti.pds.dinner.sales.domain.exception.InvalidSaleItemException;
 
 import java.math.BigDecimal;
 
 @Getter
 @AllArgsConstructor
+@Builder
 public class SaleItem {
     
     private SaleItemId id;
-    private String productId;
+    private Long productId;
     private int quantity;
     private BigDecimal unitPrice;
 
-    public SaleItem(String productId, int quantity, BigDecimal unitPrice) {
+    public SaleItem(Long productId, int quantity, BigDecimal unitPrice) {
         this(new SaleItemId(), productId, quantity, unitPrice);
+        validate(quantity, unitPrice);
     }
-
 
     private void validate(int quantity, BigDecimal unitPrice) {
         if (quantity <= 0) {
-            throw new IllegalArgumentException("Quantity must be greater than zero.");
+            throw new InvalidSaleItemException("Quantity must be greater than zero.");
         }
         if (unitPrice == null || unitPrice.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Unit price cannot be null or negative.");
+            throw new InvalidSaleItemException("Unit price cannot be null or negative.");
         }
     }
 
