@@ -10,4 +10,8 @@ import java.util.List;
 @Repository
 public interface ProductEntityRepository extends CrudRepository<ProductEntity, Long> {
     @NonNull List<ProductEntity> findAll();
+
+    List<ProductEntity> findByDeletedAtIsNull();
+
+    List<ProductEntity> findByDeletedAtIsNullAndActive(boolean active);
 }

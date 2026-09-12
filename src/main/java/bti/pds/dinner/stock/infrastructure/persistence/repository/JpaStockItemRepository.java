@@ -32,17 +32,23 @@ public class JpaStockItemRepository implements StockItemRepository {
     }
 
     @Override
-    public List<StockItem> findByStockId(@NonNull StockId stockId) {
-        return repository.findByStockId(stockId.value())
-                .stream()
+    public List<StockItem> findByStockId(@NonNull StockId stockId, Boolean active) {
+        List<StockItemEntity> entities = active == null
+                ? repository.findByStockIdAndDeletedAtIsNull(stockId.value())
+                : repository.findByStockIdAndDeletedAtIsNullAndActive(stockId.value(), active);
+
+        return entities.stream()
                 .map(StockItemEntity::toDomain)
                 .toList();
     }
 
     @Override
-    public List<StockItem> findAll() {
-        return repository.findAll()
-                .stream()
+    public List<StockItem> findAll(Boolean active) {
+        List<StockItemEntity> entities = active == null
+                ? repository.findByDeletedAtIsNull()
+                : repository.findByDeletedAtIsNullAndActive(active);
+
+        return entities.stream()
                 .map(StockItemEntity::toDomain)
                 .toList();
     }

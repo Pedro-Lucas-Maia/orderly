@@ -18,6 +18,14 @@ public interface StockItemEntityRepository extends CrudRepository<StockItemEntit
 
     List<StockItemEntity> findByStockId(Long stockId);
 
+    List<StockItemEntity> findByDeletedAtIsNull();
+
+    List<StockItemEntity> findByDeletedAtIsNullAndActive(boolean active);
+
+    List<StockItemEntity> findByStockIdAndDeletedAtIsNull(Long stockId);
+
+    List<StockItemEntity> findByStockIdAndDeletedAtIsNullAndActive(Long stockId, boolean active);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select item from StockItemEntity item where item.id = :id")
     Optional<StockItemEntity> findByIdForUpdate(Long id);
