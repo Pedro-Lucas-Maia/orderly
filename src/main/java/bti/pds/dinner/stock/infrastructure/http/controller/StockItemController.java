@@ -3,16 +3,20 @@ package bti.pds.dinner.stock.infrastructure.http.controller;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import bti.pds.dinner.stock.application.output.StockItemOutput;
 import bti.pds.dinner.stock.application.service.StockItemService;
 import bti.pds.dinner.stock.infrastructure.http.request.CreateStockItemRequest;
 import bti.pds.dinner.stock.infrastructure.http.request.RegisterMovementRequest;
+import bti.pds.dinner.stock.infrastructure.http.request.UpdateStockItemRequest;
 import bti.pds.dinner.stock.infrastructure.http.response.StockItemResponse;
 
 import java.util.List;
@@ -35,8 +39,20 @@ public class StockItemController {
     }
 
     @GetMapping("/api/stocks/{stockId}/items")
-    public ResponseEntity<List<StockItemResponse>> listByStockId(@PathVariable Long stockId) {
-        List<StockItemResponse> response = stockItemService.listByStock(stockId).stream()
+    public ResponseEntity<List<StockItemResponse>> listByStockId(
+            @PathVariable Long stockId,
+            @RequestParam(required = false) Boolean active
+    ) {
+        List<StockItemResponse> response = stockItemService.listByStock(stockId, active).stream()
+                .map(StockItemResponse::from)
+                .toList();
+        return ResponseEntity.ok(response);
+    }
+
+    // TODO: listagem global provisória — remover quando o front passar a usar o stockId
+    @GetMapping("/api/stock-items")
+    public ResponseEntity<List<StockItemResponse>> listAll(@RequestParam(required = false) Boolean active) {
+        List<StockItemResponse> response = stockItemService.listAll(active).stream()
                 .map(StockItemResponse::from)
                 .toList();
         return ResponseEntity.ok(response);
@@ -46,6 +62,21 @@ public class StockItemController {
     public ResponseEntity<StockItemResponse> getById(@PathVariable Long id) {
         StockItemOutput output = stockItemService.getById(id);
         return ResponseEntity.ok(StockItemResponse.from(output));
+    }
+
+    @PatchMapping("/api/stock-items/{id}")
+    public ResponseEntity<StockItemResponse> update(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateStockItemRequest request
+    ) {
+        StockItemOutput output = stockItemService.update(id, UpdateStockItemRequest.toInput(request));
+        return ResponseEntity.ok(StockItemResponse.from(output));
+    }
+
+    @DeleteMapping("/api/stock-items/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        stockItemService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/api/stock-items/{id}/movements")
