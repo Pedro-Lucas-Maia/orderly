@@ -2,8 +2,8 @@ package bti.pds.dinner.sales.domain;
 
 import java.util.UUID;
 
-public record SaleID(UUID uuid) {
-    public SaleID() {
+public record SaleId(UUID uuid) {
+    public SaleId() {
         this(UUID.randomUUID());
     }    
 }
