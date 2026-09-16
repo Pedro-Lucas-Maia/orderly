@@ -1,36 +1,36 @@
 package bti.pds.dinner.sales.domain;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import bti.pds.dinner.sales.domain.exception.InvalidSaleStateException;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-
 @AllArgsConstructor
 @Getter
+@Builder
 public class Sale {
-    private SaleID id;
+    private SaleId id;
     private LocalDateTime date;
     private SaleStatus status;
     private List<SaleItem> items;
     private String observation;
 
-    public Sale(SaleID id, String observation) {
-        if (id == null) {
-            throw new IllegalArgumentException("Sale ID cannot be null.");
-        }
-        this.id = id;
+    public Sale(String observation) {
+        this.id = new SaleId();
         this.date = LocalDateTime.now();
-        this.status = SaleStatus.PENDENTE;
+        this.status = SaleStatus.PENDING;
         this.items = new ArrayList<>();
         this.observation = observation;
     }
 
-    public void addItem(String productId, int quantity, BigDecimal unitPrice) {
-        if (this.status != SaleStatus.PENDENTE) {
-            throw new IllegalStateException("Items can only be added to pending sales.");
+    public void addItem(Long productId, int quantity, BigDecimal unitPrice) {
+        if (this.status != SaleStatus.PENDING) {
+            throw new InvalidSaleStateException("Items can only be added to pending sales.");
         }
         this.items.add(new SaleItem(productId, quantity, unitPrice));
     }
@@ -42,16 +42,16 @@ public class Sale {
     }
 
     public void confirm() {
-        if (this.status != SaleStatus.PENDENTE) {
-            throw new IllegalStateException("Only pending sales can be confirmed.");
+        if (this.status != SaleStatus.PENDING) {
+            throw new InvalidSaleStateException("Only pending sales can be confirmed.");
         }
-        this.status = SaleStatus.CONFIRMADA;
+        this.status = SaleStatus.CONFIRMED;
     }
 
     public void cancel() {
-        if (this.status == SaleStatus.CANCELADA) {
-            throw new IllegalStateException("Esta venda já está cancelada.");
+        if (this.status == SaleStatus.CANCELLED) {
+            throw new InvalidSaleStateException("This sale is already cancelled.");
         }
-        this.status = SaleStatus.CANCELADA;
+        this.status = SaleStatus.CANCELLED;
     }
 }

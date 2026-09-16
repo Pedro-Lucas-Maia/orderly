@@ -12,6 +12,7 @@ import bti.pds.dinner.stock.domain.StockId;
 import bti.pds.dinner.stock.domain.StockItem;
 import bti.pds.dinner.stock.domain.StockItemId;
 import bti.pds.dinner.stock.domain.StockItemRepository;
+import bti.pds.dinner.stock.domain.MovementType;
 import bti.pds.dinner.stock.domain.StockMovement;
 import bti.pds.dinner.stock.domain.StockMovementRepository;
 import bti.pds.dinner.stock.domain.StockRepository;
@@ -117,11 +118,65 @@ public class StockItemService {
         return toOutput(saved);
     }
 
+    @Transactional
+    public int getBalance(Long stockItemId) {
+        StockItem item = findActiveItemForUpdateOrThrow(stockItemId);
+        return item.getCurrentQuantity();
+    }
+
+    @Transactional
+    public void deductStock(Long stockItemId, int quantity, String reason) {
+        StockItem item = findActiveItemForUpdateOrThrow(stockItemId);
+
+        StockItem updated = item.applyMovement(MovementType.SAIDA, quantity);
+        stockItemRepository.save(updated);
+
+        stockMovementRepository.save(new StockMovement(
+                updated.getId(),
+                MovementType.SAIDA,
+                quantity,
+                LocalDateTime.now(),
+                reason
+        ));
+    }
+
+    @Transactional
+    public void addStock(Long stockItemId, int quantity, String reason) {
+        StockItem item = findItemForUpdateOrThrow(stockItemId);
+
+        StockItem updated = item.applyMovement(MovementType.ENTRADA, quantity);
+        stockItemRepository.save(updated);
+
+        stockMovementRepository.save(new StockMovement(
+                updated.getId(),
+                MovementType.ENTRADA,
+                quantity,
+                LocalDateTime.now(),
+                reason
+        ));
+    }
+
     private StockItem findItemOrThrow(Long id) {
         StockItem item = stockItemRepository.findById(new StockItemId(id))
                 .orElseThrow(() -> new StockItemNotFoundException("Stock item not found"));
         if (item.isDeleted()) {
             throw new StockItemNotFoundException("Stock item not found");
+        }
+        return item;
+    }
+
+    private StockItem findItemForUpdateOrThrow(Long id) {
+        return stockItemRepository.findByIdForUpdate(new StockItemId(id))
+                .orElseThrow(() -> new StockItemNotFoundException("Stock item not found: " + id));
+    }
+
+    private StockItem findActiveItemForUpdateOrThrow(Long id) {
+        StockItem item = findItemForUpdateOrThrow(id);
+        if (item.isDeleted()) {
+            throw new IllegalStateException("Stock item is deleted: " + id);
+        }
+        if (!item.isActive()) {
+            throw new IllegalStateException("Stock item is inactive: " + id);
         }
         return item;
     }

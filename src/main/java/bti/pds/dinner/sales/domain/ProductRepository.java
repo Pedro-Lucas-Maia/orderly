@@ -4,6 +4,6 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public interface ProductRepository {
-    BigDecimal getCurrentPrice(String productId);
-    List<RecipeItem> getRecipe(String ProductId);
+    BigDecimal getCurrentPrice(Long productId);
+    List<RecipeItem> getRecipe(Long ProductId);
 } 
