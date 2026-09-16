@@ -4,18 +4,22 @@ package bti.pds.dinner.auth.application.service;
 import bti.pds.dinner.auth.domain.User;
 import bti.pds.dinner.auth.infrastructure.mail.EmailSender;
 import org.jspecify.annotations.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
 public class MailService {
     private final EmailSender emailSender;
+    private final Logger logger = LoggerFactory.getLogger(MailService.class);
 
     public MailService(EmailSender emailSender) {
         this.emailSender = emailSender;
     }
 
     public void sendVerificationEmail(@NonNull User user, String token) {
-        String verifyLink = "http://localhost:8080/api/auth/verify?token=" + token;
+        String verifyLink = "http://localhost:3000/verificar?token=" + token;
+        logger.info(verifyLink);
         String subject = "Please verify your email";
         String content = """
                 <h1> Welcome, %s!</h1>
@@ -28,6 +32,7 @@ public class MailService {
 
     public void sendResetPasswordEmail(@NonNull User user, String token) {
         String resetLink = "http://localhost:8080/api/auth/password-reset/validate?token=" + token;
+        logger.info(resetLink);
         String subject = "Reset your password";
         String content = """
                 <h1> Hello, %s!</h1>
