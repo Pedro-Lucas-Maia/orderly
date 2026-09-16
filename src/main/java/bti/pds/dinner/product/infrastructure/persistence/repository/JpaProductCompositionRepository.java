@@ -5,6 +5,7 @@ import bti.pds.dinner.product.domain.ProductCompositionId;
 import bti.pds.dinner.product.domain.ProductCompositionRepository;
 import bti.pds.dinner.product.domain.ProductId;
 import bti.pds.dinner.product.infrastructure.persistence.entity.ProductCompositionEntity;
+import bti.pds.dinner.stock.domain.StockItemId;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Repository;
 
@@ -41,5 +42,15 @@ public class JpaProductCompositionRepository implements ProductCompositionReposi
     @Override
     public void delete(ProductComposition productComposition) {
         repository.delete(ProductCompositionEntity.from(productComposition));
+    }
+
+    @Override
+    public void deleteByProductId(@NonNull ProductId productId) {
+        repository.deleteByProductId(productId.value());
+    }
+
+    @Override
+    public void deleteByStockItemId(@NonNull StockItemId stockItemId) {
+        repository.deleteByStockItemId(stockItemId.value());
     }
 }

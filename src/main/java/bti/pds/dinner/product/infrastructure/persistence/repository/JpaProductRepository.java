@@ -30,9 +30,12 @@ public class JpaProductRepository implements ProductRepository {
     }
 
     @Override
-    public List<Product> findAll() {
-        return repository.findAll()
-                .stream()
+    public List<Product> findAll(Boolean active) {
+        List<ProductEntity> entities = active == null
+                ? repository.findByDeletedAtIsNull()
+                : repository.findByDeletedAtIsNullAndActive(active);
+
+        return entities.stream()
                 .map(ProductEntity::toDomain)
                 .toList();
     }

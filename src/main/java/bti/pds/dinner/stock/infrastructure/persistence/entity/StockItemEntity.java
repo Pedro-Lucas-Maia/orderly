@@ -17,6 +17,7 @@ import bti.pds.dinner.stock.domain.StockItem;
 import bti.pds.dinner.stock.domain.StockItemId;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "stock_items")
@@ -49,6 +50,9 @@ public class StockItemEntity {
 
     private boolean active;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     public static StockItemEntity from(@NonNull StockItem stockItem) {
         return StockItemEntity.builder()
                 .id(stockItem.getId() != null ? stockItem.getId().value() : null)
@@ -60,6 +64,7 @@ public class StockItemEntity {
                 .minimumStock(stockItem.getMinimumStock())
                 .unitCost(stockItem.getUnitCost())
                 .active(stockItem.isActive())
+                .deletedAt(stockItem.getDeletedAt())
                 .build();
     }
 
@@ -74,6 +79,7 @@ public class StockItemEntity {
                 .minimumStock(entity.getMinimumStock())
                 .unitCost(entity.getUnitCost())
                 .active(entity.isActive())
+                .deletedAt(entity.getDeletedAt())
                 .build();
     }
 }

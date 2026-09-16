@@ -20,4 +20,17 @@ public class ProductComposition {
         this.stockItemId = stockItemId;
         this.quantity = quantity;
     }
+
+    public ProductComposition withQuantity(int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than 0");
+        }
+
+        return ProductComposition.builder()
+                .id(this.id)
+                .productId(this.productId)
+                .stockItemId(this.stockItemId)
+                .quantity(quantity)
+                .build();
+    }
 }

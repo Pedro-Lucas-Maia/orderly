@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 import bti.pds.dinner.stock.domain.exception.InsufficientStockException;
 
@@ -21,6 +22,7 @@ public class StockItem {
     private int minimumStock;
     private BigDecimal unitCost;
     private boolean active;
+    private LocalDateTime deletedAt;
 
     public StockItem(
             StockId stockId,
@@ -41,6 +43,41 @@ public class StockItem {
         this.minimumStock = minimumStock;
         this.unitCost = unitCost;
         this.active = active;
+        this.deletedAt = null;
+    }
+
+    public boolean isDeleted() {
+        return deletedAt != null;
+    }
+
+    public StockItem update(String name, String category, Integer minimumStock, BigDecimal unitCost, Boolean active) {
+        return StockItem.builder()
+                .id(this.id)
+                .stockId(this.stockId)
+                .name(name != null ? name : this.name)
+                .category(category != null ? category : this.category)
+                .unit(this.unit)
+                .currentQuantity(this.currentQuantity)
+                .minimumStock(minimumStock != null ? minimumStock : this.minimumStock)
+                .unitCost(unitCost != null ? unitCost : this.unitCost)
+                .active(active != null ? active : this.active)
+                .deletedAt(this.deletedAt)
+                .build();
+    }
+
+    public StockItem markDeleted() {
+        return StockItem.builder()
+                .id(this.id)
+                .stockId(this.stockId)
+                .name(this.name)
+                .category(this.category)
+                .unit(this.unit)
+                .currentQuantity(this.currentQuantity)
+                .minimumStock(this.minimumStock)
+                .unitCost(this.unitCost)
+                .active(false)
+                .deletedAt(LocalDateTime.now())
+                .build();
     }
 
     public StockItem applyMovement(MovementType movementType, int quantity) {
@@ -69,6 +106,7 @@ public class StockItem {
                 .minimumStock(this.minimumStock)
                 .unitCost(this.unitCost)
                 .active(this.active)
+                .deletedAt(this.deletedAt)
                 .build();
     }
 }
