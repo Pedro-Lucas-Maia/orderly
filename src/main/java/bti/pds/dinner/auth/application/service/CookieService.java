@@ -25,8 +25,8 @@ public class CookieService {
         this.tokenService = tokenService;
     }
 
-    public String generateTokenCookie(String email) {
-        String token = tokenService.generateToken(email);
+    public String generateTokenCookie(String email, String userId) {
+        String token = tokenService.generateToken(email, userId);
 
         return buildCookie(token, expirationTime).toString();
     }

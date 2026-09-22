@@ -76,7 +76,7 @@ public class ProductService {
         return findActiveProduct(id).getPrice();
     }
 
-    private Product findActiveProduct(Long id) {
+    public Product findActiveProduct(Long id) {
         Product product = productRepository.findById(new ProductId(id))
                 .orElseThrow(() -> new ProductNotFoundException("Product not found: " + id));
         if (product.isDeleted()) {
