@@ -20,13 +20,14 @@ public class TokenService {
         this.jwtEncoder = jwtEncoder;
     }
 
-    public String generateToken(String email) {
+    public String generateToken(String email, String userId) {
         String token;
         try{
             var now = Instant.now();
             var claims = JwtClaimsSet.builder()
                     .issuer("PedroMaia Auth Server")
                     .subject(email)
+                    .claim("userId", userId)
                     .issuedAt(now)
                     .expiresAt(now.plusSeconds(expirationTime))
                     .build();
