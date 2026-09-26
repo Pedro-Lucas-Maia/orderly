@@ -10,6 +10,7 @@ public record ProductResponse(
         String name,
         String description,
         BigDecimal price,
+        String imageUrl,
         boolean active
 ) {
     public static ProductResponse from(@NonNull ProductOutput output) {
@@ -18,6 +19,7 @@ public record ProductResponse(
                 output.name(),
                 output.description(),
                 output.price(),
+                output.imageUrl(),
                 output.active()
         );
     }

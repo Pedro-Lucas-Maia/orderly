@@ -16,6 +16,8 @@ public record UpdateProductRequest(
         @DecimalMin(value = "0.0", inclusive = true, message = "Price cannot be negative")
         BigDecimal price,
 
+        String imageUrl,
+
         Boolean active
 ) {
     public static UpdateProductInput toInput(@NonNull UpdateProductRequest request) {
@@ -23,6 +25,7 @@ public record UpdateProductRequest(
                 request.name(),
                 request.description(),
                 request.price(),
+                request.imageUrl(),
                 request.active()
         );
     }
