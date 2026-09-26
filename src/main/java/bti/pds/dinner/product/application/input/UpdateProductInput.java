@@ -6,6 +6,7 @@ public record UpdateProductInput(
         String name,
         String description,
         BigDecimal price,
+        String imageUrl,
         Boolean active
 ) {
 }

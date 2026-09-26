@@ -6,6 +6,7 @@ public record CreateProductInput(
         String name,
         String description,
         BigDecimal price,
+        String imageUrl,
         boolean active
 ) {
 }

@@ -15,14 +15,16 @@ public class Product {
     private String name;
     private String description;
     private BigDecimal price;
+    private String imageUrl;
     private boolean active;
     private LocalDateTime deletedAt;
 
-    public Product(String name, String description, BigDecimal price, boolean active) {
+    public Product(String name, String description, BigDecimal price, String imageUrl, boolean active) {
         this.id = null;
         this.name = name;
         this.description = description;
         this.price = price;
+        this.imageUrl = imageUrl;
         this.active = active;
         this.deletedAt = null;
     }
@@ -51,5 +53,11 @@ public class Product {
                 .active(false)
                 .deletedAt(LocalDateTime.now())
                 .build();
+    }
+
+    public Product updateImage(String imageUrl) {
+        this.imageUrl = imageUrl;
+
+        return this;
     }
 }

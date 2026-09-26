@@ -20,6 +20,8 @@ public record CreateProductRequest(
         @DecimalMin(value = "0.0", inclusive = true, message = "Price cannot be negative")
         BigDecimal price,
 
+        String imageUrl,
+
         boolean active
 ) {
     public static CreateProductInput toInput(@NonNull CreateProductRequest request) {
@@ -27,6 +29,7 @@ public record CreateProductRequest(
                 request.name(),
                 request.description(),
                 request.price(),
+                request.imageUrl(),
                 request.active()
         );
     }

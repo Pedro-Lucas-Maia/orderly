@@ -2,12 +2,7 @@ package bti.pds.dinner.product.infrastructure.persistence.entity;
 
 import bti.pds.dinner.product.domain.Product;
 import bti.pds.dinner.product.domain.ProductId;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -34,6 +29,8 @@ public class ProductEntity {
 
     private BigDecimal price;
 
+    private String imageUrl;
+
     private boolean active;
 
     @Column(name = "deleted_at")
@@ -45,6 +42,7 @@ public class ProductEntity {
                 .name(product.getName())
                 .description(product.getDescription())
                 .price(product.getPrice())
+                .imageUrl(product.getImageUrl())
                 .active(product.isActive())
                 .deletedAt(product.getDeletedAt())
                 .build();
@@ -56,6 +54,7 @@ public class ProductEntity {
                 .name(entity.getName())
                 .description(entity.getDescription())
                 .price(entity.getPrice())
+                .imageUrl(entity.getImageUrl())
                 .active(entity.isActive())
                 .deletedAt(entity.getDeletedAt())
                 .build();
