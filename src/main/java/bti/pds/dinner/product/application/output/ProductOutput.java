@@ -7,6 +7,7 @@ public record ProductOutput(
         String name,
         String description,
         BigDecimal price,
+        String imageUrl,
         boolean active
 ) {
 }

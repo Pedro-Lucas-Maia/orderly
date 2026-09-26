@@ -8,6 +8,7 @@ import bti.pds.dinner.product.domain.ProductCompositionRepository;
 import bti.pds.dinner.product.domain.ProductId;
 import bti.pds.dinner.product.domain.ProductRepository;
 import bti.pds.dinner.product.domain.exception.ProductNotFoundException;
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,9 +29,9 @@ public class ProductService {
     }
 
     @Transactional
-    public ProductOutput create(CreateProductInput input) {
+    public ProductOutput create(@NonNull CreateProductInput input) {
         Product saved = productRepository.save(
-                new Product(input.name(), input.description(), input.price(), input.active())
+                new Product(input.name(), input.description(), input.price(), input.imageUrl(), input.active())
         );
         return toOutput(saved);
     }
@@ -46,7 +47,7 @@ public class ProductService {
     }
 
     @Transactional
-    public ProductOutput update(Long id, UpdateProductInput input) {
+    public ProductOutput update(Long id, @NonNull UpdateProductInput input) {
         Product updated = findNotDeletedOrThrow(id).update(
                 input.name(),
                 input.description(),
@@ -63,7 +64,7 @@ public class ProductService {
         productRepository.save(product.markDeleted());
     }
 
-    private Product findNotDeletedOrThrow(Long id) {
+    private @NonNull Product findNotDeletedOrThrow(Long id) {
         Product product = productRepository.findById(new ProductId(id))
                 .orElseThrow(() -> new ProductNotFoundException("Product not found"));
         if (product.isDeleted()) {
@@ -88,12 +89,13 @@ public class ProductService {
         return product;
     }
 
-    private ProductOutput toOutput(Product product) {
+    private ProductOutput toOutput(@NonNull Product product) {
         return new ProductOutput(
                 product.getId().value(),
                 product.getName(),
                 product.getDescription(),
                 product.getPrice(),
+                product.getImageUrl(),
                 product.isActive()
         );
     }
