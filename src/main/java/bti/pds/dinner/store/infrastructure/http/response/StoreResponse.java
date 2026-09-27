@@ -12,7 +12,8 @@ public record StoreResponse(
         LocalTime closingTime,
         int maxOrdersInProgress,
         boolean automaticPause,
-        StoreStatus status
+        StoreStatus status,
+        StoreStatus manualStatus
 ) {
     public static StoreResponse from(StoreOutput output) {
         return new StoreResponse(
@@ -22,7 +23,8 @@ public record StoreResponse(
                 output.closingTime(),
                 output.maxOrdersInProgress(),
                 output.automaticPause(),
-                output.status()
+                output.status(),
+                output.manualStatus()
         );
     }
 }

@@ -48,15 +48,20 @@ public class StoreEntity {
     @Column(nullable = false)
     private StoreStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "manual_status")
+    private StoreStatus manualStatus;
+
     public static StoreEntity from(Store store) {
         return StoreEntity.builder()
                 .id(store.getId())
                 .name(store.getName())
-                .openingTime(store.getOpeninTime())
-                .closingTime(store.getClosingTIme())
+                .openingTime(store.getOpeningTime())
+                .closingTime(store.getClosingTime())
                 .maxOrdersInProgress(store.getMaxOrdersInProgress())
                 .automaticPause(store.isAutomaticPause())
                 .status(store.getStatus())
+                .manualStatus(store.getManualStatus())
                 .build();
     }
 
@@ -68,7 +73,8 @@ public class StoreEntity {
                 entity.closingTime,
                 entity.maxOrdersInProgress,
                 entity.automaticPause,
-                entity.status
+                entity.status,
+                entity.manualStatus
         );
     }
 }

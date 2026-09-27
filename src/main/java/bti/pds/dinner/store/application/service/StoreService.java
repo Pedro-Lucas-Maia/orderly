@@ -11,6 +11,8 @@ import bti.pds.dinner.store.domain.exception.StoreNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalTime;
+
 @Service
 public class StoreService {
 
@@ -31,6 +33,7 @@ public class StoreService {
                 input.automaticPause(),
                 StoreStatus.FECHADA
         );
+        store.refreshAutomaticStatus(LocalTime.now());
         return toOutput(storeRepository.save(store));
     }
 
@@ -42,18 +45,36 @@ public class StoreService {
     @Transactional
     public StoreOutput updateSettings(Long id, UpdateStoreSettingsInput input) {
         Store store = findById(id);
-        store.setOpeninTime(input.openingTime());
-        store.setClosingTIme(input.closingTime());
-        store.setMaxOrdersInProgress(input.maxOrdersInProgress());
-        store.setAutomaticPause(input.automaticPause());
+        store.updateSettings(
+                input.openingTime(),
+                input.closingTime(),
+                input.maxOrdersInProgress(),
+                input.automaticPause()
+        );
+        store.refreshAutomaticStatus(LocalTime.now());
         return toOutput(storeRepository.save(store));
     }
 
     @Transactional
     public StoreOutput updateStatusManually(Long id, UpdateStoreStatusInput input) {
         Store store = findById(id);
-        store.setStatus(input.status());
+        store.setManualStatus(input.status());
         return toOutput(storeRepository.save(store));
+    }
+
+    @Transactional
+    public StoreOutput clearManualStatus(Long id) {
+        Store store = findById(id);
+        store.clearManualStatus();
+        store.refreshAutomaticStatus(LocalTime.now());
+        return toOutput(storeRepository.save(store));
+    }
+
+    @Transactional
+    public void refreshAutomaticStatuses(LocalTime currentTime) {
+        storeRepository.findAll().stream()
+                .filter(store -> store.refreshAutomaticStatus(currentTime))
+                .forEach(storeRepository::save);
     }
 
     private Store findById(Long id) {
@@ -65,11 +86,12 @@ public class StoreService {
         return new StoreOutput(
                 store.getId(),
                 store.getName(),
-                store.getOpeninTime(),
-                store.getClosingTIme(),
+                store.getOpeningTime(),
+                store.getClosingTime(),
                 store.getMaxOrdersInProgress(),
                 store.isAutomaticPause(),
-                store.getStatus()
+                store.getStatus(),
+                store.getManualStatus()
         );
     }
 }

@@ -11,6 +11,7 @@ public record StoreOutput(
         LocalTime closingTime,
         int maxOrdersInProgress,
         boolean automaticPause,
-        StoreStatus status
+        StoreStatus status,
+        StoreStatus manualStatus
 ) {
 }
