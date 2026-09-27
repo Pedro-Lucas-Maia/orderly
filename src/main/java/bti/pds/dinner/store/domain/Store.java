@@ -73,21 +73,36 @@ public class Store {
         this.manualStatus = null;
     }
 
-    public boolean refreshAutomaticStatus(LocalTime currentTime) {
+    public boolean refreshAutomaticStatus(LocalTime currentTime, int ordersInProgress) {
         Objects.requireNonNull(currentTime, "Current time is required");
+        if (ordersInProgress < 0) {
+            throw new IllegalArgumentException("Orders in progress cannot be negative");
+        }
         if (manualStatus != null) {
             return false;
         }
 
-        StoreStatus calculatedStatus = isOpenAt(currentTime)
-                ? StoreStatus.ABERTA
-                : StoreStatus.FECHADA;
+        StoreStatus calculatedStatus = calculateAutomaticStatus(currentTime, ordersInProgress);
 
         if (status == calculatedStatus) {
             return false;
         }
         status = calculatedStatus;
         return true;
+    }
+
+    public boolean refreshAutomaticStatus(LocalTime currentTime) {
+        return refreshAutomaticStatus(currentTime, 0);
+    }
+
+    private StoreStatus calculateAutomaticStatus(LocalTime currentTime, int ordersInProgress) {
+        if (!isOpenAt(currentTime)) {
+            return StoreStatus.FECHADA;
+        }
+        if (automaticPause && ordersInProgress >= maxOrdersInProgress) {
+            return StoreStatus.PAUSADA;
+        }
+        return StoreStatus.ABERTA;
     }
 
     private boolean isOpenAt(LocalTime currentTime) {

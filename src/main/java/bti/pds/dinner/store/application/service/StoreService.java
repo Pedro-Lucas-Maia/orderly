@@ -5,6 +5,7 @@ import bti.pds.dinner.store.application.input.UpdateStoreSettingsInput;
 import bti.pds.dinner.store.application.input.UpdateStoreStatusInput;
 import bti.pds.dinner.store.application.output.StoreOutput;
 import bti.pds.dinner.store.domain.Store;
+import bti.pds.dinner.store.domain.OrdersInProgressCounter;
 import bti.pds.dinner.store.domain.StoreRepository;
 import bti.pds.dinner.store.domain.StoreStatus;
 import bti.pds.dinner.store.domain.exception.StoreNotFoundException;
@@ -17,9 +18,14 @@ import java.time.LocalTime;
 public class StoreService {
 
     private final StoreRepository storeRepository;
+    private final OrdersInProgressCounter ordersInProgressCounter;
 
-    public StoreService(StoreRepository storeRepository) {
+    public StoreService(
+            StoreRepository storeRepository,
+            OrdersInProgressCounter ordersInProgressCounter
+    ) {
         this.storeRepository = storeRepository;
+        this.ordersInProgressCounter = ordersInProgressCounter;
     }
 
     @Transactional
@@ -33,7 +39,7 @@ public class StoreService {
                 input.automaticPause(),
                 StoreStatus.FECHADA
         );
-        store.refreshAutomaticStatus(LocalTime.now());
+        refreshAutomaticStatus(store, LocalTime.now());
         return toOutput(storeRepository.save(store));
     }
 
@@ -51,7 +57,7 @@ public class StoreService {
                 input.maxOrdersInProgress(),
                 input.automaticPause()
         );
-        store.refreshAutomaticStatus(LocalTime.now());
+        refreshAutomaticStatus(store, LocalTime.now());
         return toOutput(storeRepository.save(store));
     }
 
@@ -66,15 +72,20 @@ public class StoreService {
     public StoreOutput clearManualStatus(Long id) {
         Store store = findById(id);
         store.clearManualStatus();
-        store.refreshAutomaticStatus(LocalTime.now());
+        refreshAutomaticStatus(store, LocalTime.now());
         return toOutput(storeRepository.save(store));
     }
 
     @Transactional
     public void refreshAutomaticStatuses(LocalTime currentTime) {
+        int ordersInProgress = ordersInProgressCounter.countOrdersInProgress();
         storeRepository.findAll().stream()
-                .filter(store -> store.refreshAutomaticStatus(currentTime))
+                .filter(store -> store.refreshAutomaticStatus(currentTime, ordersInProgress))
                 .forEach(storeRepository::save);
+    }
+
+    private void refreshAutomaticStatus(Store store, LocalTime currentTime) {
+        store.refreshAutomaticStatus(currentTime, ordersInProgressCounter.countOrdersInProgress());
     }
 
     private Store findById(Long id) {
