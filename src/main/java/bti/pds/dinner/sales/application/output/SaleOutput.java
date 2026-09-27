@@ -8,6 +8,7 @@ import java.util.List;
 
 public record SaleOutput(
         String saleId,
+        Long storeId,
         LocalDateTime date,
         SaleStatus status,
         BigDecimal totalAmount,

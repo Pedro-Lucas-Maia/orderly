@@ -78,14 +78,19 @@ public class StoreService {
 
     @Transactional
     public void refreshAutomaticStatuses(LocalTime currentTime) {
-        int ordersInProgress = ordersInProgressCounter.countOrdersInProgress();
         storeRepository.findAll().stream()
-                .filter(store -> store.refreshAutomaticStatus(currentTime, ordersInProgress))
+                .filter(store -> store.refreshAutomaticStatus(
+                        currentTime,
+                        ordersInProgressCounter.countOrdersInProgress(store.getId())
+                ))
                 .forEach(storeRepository::save);
     }
 
     private void refreshAutomaticStatus(Store store, LocalTime currentTime) {
-        store.refreshAutomaticStatus(currentTime, ordersInProgressCounter.countOrdersInProgress());
+        store.refreshAutomaticStatus(
+                currentTime,
+                ordersInProgressCounter.countOrdersInProgress(store.getId())
+        );
     }
 
     private Store findById(Long id) {

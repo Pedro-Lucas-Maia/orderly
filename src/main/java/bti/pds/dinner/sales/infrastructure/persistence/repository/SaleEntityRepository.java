@@ -6,5 +6,5 @@ import bti.pds.dinner.sales.domain.SaleStatus;
 import bti.pds.dinner.sales.infrastructure.persistence.entity.SaleEntity;
 
 public interface SaleEntityRepository extends JpaRepository<SaleEntity, String>{
-    long countByStatus(SaleStatus status);
+    long countByStoreIdAndStatus(Long storeId, SaleStatus status);
 }

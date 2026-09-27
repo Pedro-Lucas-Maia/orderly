@@ -6,6 +6,7 @@ import bti.pds.dinner.sales.application.output.SaleOutput;
 import bti.pds.dinner.sales.application.service.SaleService;
 import bti.pds.dinner.sales.domain.*;
 import bti.pds.dinner.sales.domain.exception.InvalidSaleStateException;
+import bti.pds.dinner.sales.domain.exception.StoreUnavailableException;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -18,15 +19,23 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class SaleServiceTest {
     @Test
-    void confirmsSaleAfterAggregatingAndCheckingEveryIngredient() {
+    void confirmsPendingSaleAfterAggregatingAndCheckingEveryIngredient() {
         FakeProductRepository products = new FakeProductRepository();
         products.recipes.put(1L, List.of(new RecipeItem(10L, 2), new RecipeItem(11L, 1)));
         products.recipes.put(2L, List.of(new RecipeItem(10L, 1)));
         FakeStockRepository stock = new FakeStockRepository(Map.of(10L, 5, 11L, 2));
         FakeSaleRepository sales = new FakeSaleRepository();
 
-        SaleOutput output = new SaleService(sales, products, stock).createSale(new CreateSaleInput("Mesa 4", List.of(
+        SaleService service = new SaleService(sales, products, stock, storeId -> true);
+        SaleOutput createdSale = service.createSale(new CreateSaleInput(1L, "Mesa 4", List.of(
                 new SaleItemInput(1L, 2), new SaleItemInput(2L, 1))));
+
+        assertEquals(SaleStatus.PENDING, createdSale.status());
+        assertEquals(5, stock.balances.get(10L));
+        assertEquals(2, stock.balances.get(11L));
+        assertEquals(0, stock.deductions.size());
+
+        SaleOutput output = service.confirmSale(createdSale.saleId());
 
         assertEquals(SaleStatus.CONFIRMED, output.status());
         assertEquals(new BigDecimal("30"), output.totalAmount());
@@ -44,8 +53,8 @@ class SaleServiceTest {
         FakeStockRepository stock = new FakeStockRepository(Map.of(10L, 10, 11L, 1));
         FakeSaleRepository sales = new FakeSaleRepository();
 
-        assertThrows(InvalidSaleStateException.class, () -> new SaleService(sales, products, stock)
-                .createSale(new CreateSaleInput(null, List.of(new SaleItemInput(1L, 1)))));
+        assertThrows(InvalidSaleStateException.class, () -> new SaleService(sales, products, stock, storeId -> true)
+                .createSale(new CreateSaleInput(1L, null, List.of(new SaleItemInput(1L, 1)))));
 
         assertEquals(10, stock.balances.get(10L));
         assertEquals(1, stock.balances.get(11L));
@@ -59,15 +68,28 @@ class SaleServiceTest {
         products.recipes.put(1L, List.of(new RecipeItem(10L, 2)));
         FakeStockRepository stock = new FakeStockRepository(Map.of(10L, 0));
         FakeSaleRepository sales = new FakeSaleRepository();
-        Sale sale = new Sale("Cliente desistiu");
+        Sale sale = new Sale(1L, "Cliente desistiu");
         sale.addItem(1L, 3, new BigDecimal("10"));
         sale.confirm();
         sales.saved = sale;
 
-        new SaleService(sales, products, stock).cancelSale(sale.getId().uuid().toString());
+        new SaleService(sales, products, stock, storeId -> true).cancelSale(sale.getId().uuid().toString());
 
         assertEquals(6, stock.balances.get(10L));
         assertEquals(SaleStatus.CANCELLED, sales.saved.getStatus());
+    }
+
+    @Test
+    void doesNotCreateSaleWhenStoreIsNotOpen() {
+        FakeProductRepository products = new FakeProductRepository();
+        FakeStockRepository stock = new FakeStockRepository(Map.of());
+        FakeSaleRepository sales = new FakeSaleRepository();
+
+        assertThrows(StoreUnavailableException.class, () -> new SaleService(
+                sales, products, stock, storeId -> false
+        ).createSale(new CreateSaleInput(1L, null, List.of(new SaleItemInput(1L, 1)))));
+
+        assertNull(sales.saved);
     }
 
     private static class FakeProductRepository implements ProductRepository {

@@ -8,6 +8,7 @@ import bti.pds.dinner.sales.domain.*;
 import bti.pds.dinner.sales.domain.exception.InvalidSaleStateException;
 import bti.pds.dinner.sales.domain.exception.SaleException;
 import bti.pds.dinner.sales.domain.exception.SaleNotFoundException;
+import bti.pds.dinner.sales.domain.exception.StoreUnavailableException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,40 +24,56 @@ public class SaleService {
     private final SaleRepository saleRepository;
     private final ProductRepository productRepository;
     private final StockRepository stockRepository;
+    private final StoreAvailability storeAvailability;
 
     public SaleService(SaleRepository saleRepository, ProductRepository productRepository,
-            StockRepository stockRepository) {
+            StockRepository stockRepository, StoreAvailability storeAvailability) {
         this.saleRepository = saleRepository;
         this.productRepository = productRepository;
         this.stockRepository = stockRepository;
+        this.storeAvailability = storeAvailability;
     }
 
     @Transactional
     public SaleOutput createSale(CreateSaleInput input) {
         validateInput(input);
+        ensureStoreIsAvailable(input.storeId());
 
-        Sale sale = new Sale(input.observation());
+        Sale sale = new Sale(input.storeId(), input.observation());
         addItemsToSale(sale, input.items());
 
         Map<Long, Integer> totalConsumption = calculateTotalConsumption(input.items());
         validateStockAvailability(totalConsumption);
+        return toOutput(saleRepository.save(sale));
+    }
 
-        String reason = "Sale #" + sale.getId().uuid().toString();
-        deductStock(totalConsumption, reason);
+    @Transactional
+    public SaleOutput confirmSale(String saleIdStr) {
+        Sale sale = findSale(saleIdStr);
+
+        if (sale.getStatus() != SaleStatus.PENDING) {
+            throw new InvalidSaleStateException("Only PENDING sales can be confirmed.");
+        }
+
+        Map<Long, Integer> totalConsumption = calculateConsumptionFromSale(sale);
+        validateStockAvailability(totalConsumption);
+        deductStock(totalConsumption, "Sale #" + sale.getId().uuid());
 
         sale.confirm();
-
         return toOutput(saleRepository.save(sale));
     }
 
     @Transactional
     public void cancelSale(String saleIdStr) {
-        Sale sale = findConfirmedSale(saleIdStr);
+        Sale sale = findSale(saleIdStr);
 
-        Map<Long, Integer> totalToReturn = calculateConsumptionFromSale(sale);
-
-        String reason = "Cancel sale #" + saleIdStr;
-        restoreStock(totalToReturn, reason);
+        if (sale.getStatus() == SaleStatus.CANCELLED) {
+            throw new InvalidSaleStateException("This sale is already cancelled.");
+        }
+        if (sale.getStatus() == SaleStatus.CONFIRMED) {
+            Map<Long, Integer> totalToReturn = calculateConsumptionFromSale(sale);
+            restoreStock(totalToReturn, "Cancel sale #" + saleIdStr);
+        }
 
         sale.cancel();
         saleRepository.save(sale);
@@ -81,6 +98,12 @@ public class SaleService {
     private void validateInput(CreateSaleInput input) {
         if (input == null || input.items() == null || input.items().isEmpty()) {
             throw new SaleException("A sale must contain at least one item.");
+        }
+    }
+
+    private void ensureStoreIsAvailable(Long storeId) {
+        if (!storeAvailability.isAvailableForOrders(storeId)) {
+            throw new StoreUnavailableException(storeId);
         }
     }
 
@@ -142,22 +165,17 @@ public class SaleService {
         }
     }
 
-    private Sale findConfirmedSale(String saleIdStr) {
+    private Sale findSale(String saleIdStr) {
         SaleId saleId = new SaleId(UUID.fromString(saleIdStr));
 
-        Sale sale = saleRepository.findById(saleId)
+        return saleRepository.findById(saleId)
                 .orElseThrow(() -> new SaleNotFoundException("Sale not found: " + saleIdStr));
-
-        if (sale.getStatus() != SaleStatus.CONFIRMED) {
-            throw new InvalidSaleStateException("Only CONFIRMED sales can be cancelled.");
-        }
-
-        return sale;
     }
 
     private SaleOutput toOutput(Sale sale) {
         return new SaleOutput(
                 sale.getId().uuid().toString(),
+                sale.getStoreId(),
                 sale.getDate(),
                 sale.getStatus(),
                 sale.calculateTotal(),

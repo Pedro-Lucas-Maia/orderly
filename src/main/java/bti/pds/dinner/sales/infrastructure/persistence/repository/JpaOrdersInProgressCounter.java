@@ -16,7 +16,7 @@ public class JpaOrdersInProgressCounter implements OrdersInProgressCounter {
     }
 
     @Override
-    public int countOrdersInProgress() {
-        return Math.toIntExact(saleRepository.countByStatus(SaleStatus.PENDING));
+    public int countOrdersInProgress(Long storeId) {
+        return Math.toIntExact(saleRepository.countByStoreIdAndStatus(storeId, SaleStatus.PENDING));
     }
 }
