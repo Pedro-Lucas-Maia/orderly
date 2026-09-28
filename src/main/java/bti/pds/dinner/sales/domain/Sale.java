@@ -9,19 +9,22 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @AllArgsConstructor
 @Getter
 @Builder
 public class Sale {
     private SaleId id;
+    private Long storeId;
     private LocalDateTime date;
     private SaleStatus status;
     private List<SaleItem> items;
     private String observation;
 
-    public Sale(String observation) {
+    public Sale(Long storeId, String observation) {
         this.id = new SaleId();
+        this.storeId = Objects.requireNonNull(storeId, "Store is required");
         this.date = LocalDateTime.now();
         this.status = SaleStatus.PENDING;
         this.items = new ArrayList<>();

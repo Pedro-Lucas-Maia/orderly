@@ -12,6 +12,7 @@ import bti.pds.dinner.sales.domain.exception.InvalidSaleItemException;
 import bti.pds.dinner.sales.domain.exception.InvalidSaleStateException;
 import bti.pds.dinner.sales.domain.exception.SaleException;
 import bti.pds.dinner.sales.domain.exception.SaleNotFoundException;
+import bti.pds.dinner.sales.domain.exception.StoreUnavailableException;
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestControllerAdvice(basePackages = "bti.pds.dinner.sales")
@@ -22,7 +23,7 @@ public class SaleExceptionHandler {
         return error(HttpStatus.NOT_FOUND, exception, request);
     }
 
-    @ExceptionHandler(InvalidSaleStateException.class)
+    @ExceptionHandler({InvalidSaleStateException.class, StoreUnavailableException.class})
     public ResponseEntity<ErrorResponse> handleConflict(InvalidSaleStateException exception, HttpServletRequest request) {
         return error(HttpStatus.CONFLICT, exception, request);
     }

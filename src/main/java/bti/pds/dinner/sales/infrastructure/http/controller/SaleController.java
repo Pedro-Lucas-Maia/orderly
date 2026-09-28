@@ -47,4 +47,9 @@ public class SaleController {
         saleService.cancelSale(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/{id}/confirm")
+    public ResponseEntity<SaleResponse> confirmSale(@PathVariable String id) {
+        return ResponseEntity.ok(SaleResponse.from(saleService.confirmSale(id)));
+    }
 }
