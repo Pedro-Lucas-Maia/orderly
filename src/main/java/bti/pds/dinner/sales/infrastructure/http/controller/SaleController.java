@@ -1,11 +1,12 @@
 package bti.pds.dinner.sales.infrastructure.http.controller;
 
+import bti.pds.dinner.sales.application.service.CheckoutService;
 import bti.pds.dinner.sales.application.service.SaleService;
-import bti.pds.dinner.sales.infrastructure.http.request.CreateSaleRequest;
+import bti.pds.dinner.sales.infrastructure.http.request.CheckoutRequest;
 import bti.pds.dinner.sales.infrastructure.http.response.SaleResponse;
-import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,16 +15,20 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/sales")
 public class SaleController {
-    
     private final SaleService saleService;
+    private final CheckoutService checkoutService;
 
-    public SaleController(SaleService saleService) {
+    public SaleController(SaleService saleService, CheckoutService checkoutService) {
         this.saleService = saleService;
+        this.checkoutService = checkoutService;
     }
 
-    @PostMapping
-    public ResponseEntity<SaleResponse> createSale(@RequestBody @Valid CreateSaleRequest request) {
-        SaleResponse response = SaleResponse.from(saleService.createSale(CreateSaleRequest.toInput(request)));
+    @PostMapping("/checkout")
+    public ResponseEntity<SaleResponse> processSale(CheckoutRequest request, JwtAuthenticationToken authentication) {
+        var userId = authentication.getToken().getClaimAsString("userId");
+        var output = checkoutService.execute(CheckoutRequest.toInput(request, userId));
+        var response = SaleResponse.from(output);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
