@@ -4,11 +4,12 @@ import bti.pds.dinner.store.application.input.CreateStoreInput;
 import bti.pds.dinner.store.application.input.UpdateStoreSettingsInput;
 import bti.pds.dinner.store.application.input.UpdateStoreStatusInput;
 import bti.pds.dinner.store.application.output.StoreOutput;
-import bti.pds.dinner.store.domain.Store;
 import bti.pds.dinner.store.domain.OrdersInProgressCounter;
+import bti.pds.dinner.store.domain.Store;
 import bti.pds.dinner.store.domain.StoreRepository;
 import bti.pds.dinner.store.domain.StoreStatus;
 import bti.pds.dinner.store.domain.exception.StoreNotFoundException;
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +30,7 @@ public class StoreService {
     }
 
     @Transactional
-    public StoreOutput create(CreateStoreInput input) {
+    public StoreOutput create(@NonNull CreateStoreInput input) {
         Store store = new Store(
                 null,
                 input.name(),
@@ -37,7 +38,12 @@ public class StoreService {
                 input.closingTime(),
                 input.maxOrdersInProgress(),
                 input.automaticPause(),
-                StoreStatus.FECHADA
+                StoreStatus.FECHADA,
+                input.addressStreet(),
+                input.addressNumber(),
+                input.addressNeighborhood(),
+                input.addressCity(),
+                input.addressZipCode()
         );
         refreshAutomaticStatus(store, LocalTime.now());
         return toOutput(storeRepository.save(store));
@@ -107,7 +113,12 @@ public class StoreService {
                 store.getMaxOrdersInProgress(),
                 store.isAutomaticPause(),
                 store.getStatus(),
-                store.getManualStatus()
+                store.getManualStatus(),
+                store.getAddressStreet(),
+                store.getAddressNumber(),
+                store.getAddressNeighborhood(),
+                store.getAddressCity(),
+                store.getAddressZipCode()
         );
     }
 }

@@ -12,6 +12,11 @@ public record StoreOutput(
         int maxOrdersInProgress,
         boolean automaticPause,
         StoreStatus status,
-        StoreStatus manualStatus
+        StoreStatus manualStatus,
+        String addressStreet,
+        String addressNumber,
+        String addressNeighborhood,
+        String addressCity,
+        String addressZipCode
 ) {
 }
