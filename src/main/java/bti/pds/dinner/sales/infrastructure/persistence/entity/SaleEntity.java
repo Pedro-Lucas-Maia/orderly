@@ -3,6 +3,7 @@ package bti.pds.dinner.sales.infrastructure.persistence.entity;
 import bti.pds.dinner.sales.domain.Sale;
 import bti.pds.dinner.sales.domain.SaleId;
 import bti.pds.dinner.sales.domain.SaleStatus;
+import bti.pds.dinner.sales.domain.UserId;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -45,6 +46,27 @@ public class SaleEntity {
     @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SaleItemEntity> items = new ArrayList<>();
 
+    @Column(name = "user_id")
+    private UUID userId;
+
+    @Column(name = "delivery_fee")
+    private BigDecimal deliveryFee;
+
+    @Column(name = "delivery_street")
+    private String deliveryStreet;
+
+    @Column(name = "delivery_number")
+    private String deliveryNumber;
+
+    @Column(name = "delivery_city")
+    private String deliveryCity;
+
+    @Column(name = "delivery_neighborhood")
+    private String deliveryNeighborhood;
+
+    @Column(name = "delivery_zip_code")
+    private String deliveryZipCode;
+
     public SaleEntity(UUID id, Long storeId, LocalDateTime date, SaleStatus status, BigDecimal totalValue, String observation) {
         this.id = id;
         this.storeId = storeId;
@@ -68,7 +90,14 @@ public class SaleEntity {
                 entity.items.stream()
                         .map(SaleItemEntity::toDomain)
                         .toList(),
-                entity.getObservation()
+                entity.getObservation(),
+                new UserId(entity.getUserId()),
+                entity.getDeliveryFee(),
+                entity.getDeliveryStreet(),
+                entity.getDeliveryNumber(),
+                entity.getDeliveryCity(),
+                entity.getDeliveryNeighborhood(),
+                entity.getDeliveryZipCode()
         );
     }
     
@@ -79,7 +108,15 @@ public class SaleEntity {
                 sale.getDate(),
                 sale.getStatus(),
                 sale.calculateTotal(),
-                sale.getObservation()
+                sale.getObservation(),
+                new ArrayList<>(),
+                sale.getUserId().uuid(),
+                sale.getDeliveryFee(),
+                sale.getDeliveryStreet(),
+                sale.getDeliveryNumber(),
+                sale.getDeliveryCity(),
+                sale.getDeliveryNeighborhood(),
+                sale.getDeliveryZipCode()
         );
         if (sale.getItems() != null) {
             sale.getItems().forEach(item -> {
