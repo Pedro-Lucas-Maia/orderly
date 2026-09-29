@@ -5,10 +5,7 @@ import bti.pds.dinner.sales.application.input.SaleItemInput;
 import bti.pds.dinner.sales.application.output.SaleItemOutput;
 import bti.pds.dinner.sales.application.output.SaleOutput;
 import bti.pds.dinner.sales.domain.*;
-import bti.pds.dinner.sales.domain.exception.InvalidSaleStateException;
-import bti.pds.dinner.sales.domain.exception.SaleException;
-import bti.pds.dinner.sales.domain.exception.SaleNotFoundException;
-import bti.pds.dinner.sales.domain.exception.StoreUnavailableException;
+import bti.pds.dinner.sales.domain.exception.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,13 +35,31 @@ public class SaleService {
     public SaleOutput createSale(CreateSaleInput input) {
         validateInput(input);
         ensureStoreIsAvailable(input.storeId());
+        BigDecimal deliveryFee = calculateDeliveryFee(input.deliveryStreet(), input.deliveryNumber(), input.deliveryNeighborhood(), input.deliveryCity(), input.deliveryZipCode());
 
-        Sale sale = new Sale(input.storeId(), input.observation());
+        Sale sale = new Sale(input.storeId(), input.observation(), new UserId(input.userId()), deliveryFee, input.deliveryStreet(), input.deliveryNumber(), input.deliveryNeighborhood(), input.deliveryCity(), input.deliveryZipCode());
         addItemsToSale(sale, input.items());
 
         Map<Long, Integer> totalConsumption = calculateTotalConsumption(input.items());
         validateStockAvailability(totalConsumption);
+        deductStock(totalConsumption, "Sale #" + sale.getId().uuid());
         return toOutput(saleRepository.save(sale));
+    }
+
+    private BigDecimal calculateDeliveryFee(String street, String number, String neighborhood, String city, String zipCode) {
+        if (city == null || !city.trim().equalsIgnoreCase("Natal")) {
+            throw new OutOfDeliveryAreaException("Unfortunately, we do not deliver to the city: " + city);
+        }
+
+        String normalizedNeighborhood = neighborhood != null ? neighborhood.trim().toLowerCase() : "";
+        
+        return switch (normalizedNeighborhood) {
+            case "ponta negra", "capim macio", "neópolis" -> new BigDecimal("5.00");
+            case "candelária", "lagoa nova", "nova descoberta", "tirol", "petrópolis" -> new BigDecimal("7.50");
+            case "alecrim", "quintas", "bairro das roças", "areia preta", "mãe luiza" -> new BigDecimal("10.00");
+            case "zona norte", "potengi", "pajuçara", "redinha", "igapó" -> new BigDecimal("15.00");
+            default -> new BigDecimal("10.00"); // Valor padrão para bairros não listados
+        };
     }
 
     @Transactional
@@ -57,7 +72,6 @@ public class SaleService {
 
         Map<Long, Integer> totalConsumption = calculateConsumptionFromSale(sale);
         validateStockAvailability(totalConsumption);
-        deductStock(totalConsumption, "Sale #" + sale.getId().uuid());
 
         sale.confirm();
         return toOutput(saleRepository.save(sale));
@@ -182,7 +196,14 @@ public class SaleService {
                 sale.getObservation(),
                 sale.getItems().stream()
                         .map(this::toItemOutput)
-                        .toList()
+                        .toList(),
+                sale.getUserId().uuid(),
+                sale.getDeliveryFee(),
+                sale.getDeliveryStreet(),
+                sale.getDeliveryNumber(),
+                sale.getDeliveryNeighborhood(),
+                sale.getDeliveryCity(),
+                sale.getDeliveryZipCode()
         );
     }
 
