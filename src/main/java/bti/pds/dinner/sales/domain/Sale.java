@@ -52,10 +52,12 @@ public class Sale {
         this.items.add(new SaleItem(productId, quantity, unitPrice));
     }
 
-    public BigDecimal calculateTotal() {
-        return items.stream()
+    public BigDecimal calculateTotal(BigDecimal deliveryFee) {
+        var subTotal =  items.stream()
                 .map(SaleItem::getSubtotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return subTotal.add(deliveryFee);
     }
 
     public void confirm() {

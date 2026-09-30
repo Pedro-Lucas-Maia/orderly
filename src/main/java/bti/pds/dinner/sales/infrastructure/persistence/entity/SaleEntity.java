@@ -107,7 +107,7 @@ public class SaleEntity {
                 sale.getStoreId(),
                 sale.getDate(),
                 sale.getStatus(),
-                sale.calculateTotal(),
+                sale.calculateTotal(sale.getDeliveryFee()),
                 sale.getObservation(),
                 new ArrayList<>(),
                 sale.getUserId().uuid(),

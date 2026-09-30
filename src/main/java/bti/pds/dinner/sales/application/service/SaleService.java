@@ -46,7 +46,7 @@ public class SaleService {
         return toOutput(saleRepository.save(sale));
     }
 
-    private BigDecimal calculateDeliveryFee(String street, String number, String neighborhood, String city, String zipCode) {
+    public BigDecimal calculateDeliveryFee(String street, String number, String neighborhood, String city, String zipCode) {
         if (city == null || !city.trim().equalsIgnoreCase("Natal")) {
             throw new OutOfDeliveryAreaException("Unfortunately, we do not deliver to the city: " + city);
         }
@@ -192,7 +192,7 @@ public class SaleService {
                 sale.getStoreId(),
                 sale.getDate(),
                 sale.getStatus(),
-                sale.calculateTotal(),
+                sale.calculateTotal(sale.getDeliveryFee()),
                 sale.getObservation(),
                 sale.getItems().stream()
                         .map(this::toItemOutput)

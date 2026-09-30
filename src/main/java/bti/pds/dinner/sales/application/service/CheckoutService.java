@@ -46,4 +46,10 @@ public class CheckoutService {
 
         return savedSale;
     }
+
+    @Transactional
+    public java.math.BigDecimal simulateFreight(java.util.UUID addressId, java.util.UUID userId) {
+        Address address = addressRepository.getAddress(addressId, userId);
+        return saleService.calculateDeliveryFee(address.getStreet(), address.getNumber(), address.getNeighborhood(), address.getCity(), address.getZipCode());
+    }
 }

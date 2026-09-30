@@ -6,6 +6,7 @@ import bti.pds.dinner.sales.infrastructure.http.request.CheckoutRequest;
 import bti.pds.dinner.sales.infrastructure.http.response.SaleResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import jakarta.validation.Valid;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,12 +25,21 @@ public class SaleController {
     }
 
     @PostMapping("/checkout")
-    public ResponseEntity<SaleResponse> processSale(CheckoutRequest request, JwtAuthenticationToken authentication) {
+    public ResponseEntity<SaleResponse> processSale(@RequestBody @Valid CheckoutRequest request, JwtAuthenticationToken authentication) {
         var userId = authentication.getToken().getClaimAsString("userId");
         var output = checkoutService.execute(CheckoutRequest.toInput(request, userId));
         var response = SaleResponse.from(output);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping("/freight")
+    public ResponseEntity<java.util.Map<String, java.math.BigDecimal>> simulateFreight(
+            @RequestParam java.util.UUID addressId, 
+            JwtAuthenticationToken authentication) {
+        var userId = java.util.UUID.fromString(authentication.getToken().getClaimAsString("userId"));
+        var fee = checkoutService.simulateFreight(addressId, userId);
+        return ResponseEntity.ok(java.util.Map.of("deliveryFee", fee));
     }
 
     @GetMapping
