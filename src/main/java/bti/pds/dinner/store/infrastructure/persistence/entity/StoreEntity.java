@@ -2,18 +2,12 @@ package bti.pds.dinner.store.infrastructure.persistence.entity;
 
 import bti.pds.dinner.store.domain.Store;
 import bti.pds.dinner.store.domain.StoreStatus;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.NonNull;
 
 import java.time.LocalTime;
 
@@ -52,6 +46,21 @@ public class StoreEntity {
     @Column(name = "manual_status")
     private StoreStatus manualStatus;
 
+    @Column(name = "address_street")
+    private String addressStreet;
+
+    @Column(name = "address_number")
+    private String addressNumber;
+
+    @Column(name = "address_neighborhood")
+    private String addressNeighborhood;
+
+    @Column(name = "address_city")
+    private String addressCity;
+
+    @Column(name = "address_zip_code")
+    private String addressZipCode;
+
     public static StoreEntity from(Store store) {
         return StoreEntity.builder()
                 .id(store.getId())
@@ -62,19 +71,29 @@ public class StoreEntity {
                 .automaticPause(store.isAutomaticPause())
                 .status(store.getStatus())
                 .manualStatus(store.getManualStatus())
+                .addressStreet(store.getAddressStreet())
+                .addressNumber(store.getAddressNumber())
+                .addressNeighborhood(store.getAddressNeighborhood())
+                .addressCity(store.getAddressCity())
+                .addressZipCode(store.getAddressZipCode())
                 .build();
     }
 
-    public static Store toDomain(StoreEntity entity) {
+    public static Store toDomain(@NonNull StoreEntity entity) {
         return new Store(
-                entity.id,
-                entity.name,
-                entity.openingTime,
-                entity.closingTime,
-                entity.maxOrdersInProgress,
-                entity.automaticPause,
-                entity.status,
-                entity.manualStatus
+                entity.getId(),
+                entity.getName(),
+                entity.getOpeningTime(),
+                entity.getClosingTime(),
+                entity.getMaxOrdersInProgress(),
+                entity.isAutomaticPause(),
+                entity.getStatus(),
+                entity.getManualStatus(),
+                entity.getAddressStreet(),
+                entity.getAddressNumber(),
+                entity.getAddressNeighborhood(),
+                entity.getAddressCity(),
+                entity.getAddressZipCode()
         );
     }
 }

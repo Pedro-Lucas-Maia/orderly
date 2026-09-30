@@ -1,10 +1,7 @@
 package bti.pds.dinner.store.infrastructure.http.request;
 
 import bti.pds.dinner.store.application.input.CreateStoreInput;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 import java.time.LocalTime;
 
@@ -22,7 +19,23 @@ public record CreateStoreRequest(
         @Positive(message = "Maximum orders in progress must be greater than zero")
         int maxOrdersInProgress,
 
-        boolean automaticPause
+        boolean automaticPause,
+
+        @NotBlank(message = "Store street is required")
+        String addressStreet,
+
+        @NotBlank(message = "Store number is required")
+        @Digits(message = "Address number must be digits", integer = 20, fraction = 0)
+        String addressNumber,
+
+        @NotBlank(message = "Store neighborhood is required")
+        String addressNeighborhood,
+
+        @NotBlank(message = "Store city is required")
+        String addressCity,
+
+        @NotBlank(message = "Store zip code is required")
+        String addressZipCode
 ) {
     public static CreateStoreInput toInput(CreateStoreRequest request) {
         return new CreateStoreInput(
@@ -30,7 +43,12 @@ public record CreateStoreRequest(
                 request.openingTime(),
                 request.closingTime(),
                 request.maxOrdersInProgress(),
-                request.automaticPause()
+                request.automaticPause(),
+                request.addressStreet(),
+                request.addressNumber(),
+                request.addressNeighborhood(),
+                request.addressCity(),
+                request.addressZipCode()
         );
     }
 }

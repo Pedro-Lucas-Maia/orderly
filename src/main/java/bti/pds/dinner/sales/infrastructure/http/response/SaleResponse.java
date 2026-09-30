@@ -7,6 +7,7 @@ import org.jspecify.annotations.NonNull;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 public record SaleResponse(
     String saleId,
@@ -15,7 +16,14 @@ public record SaleResponse(
     SaleStatus status,
     BigDecimal totalAmount,
     String observation,
-    List<SaleItemResponse> items
+    List<SaleItemResponse> items,
+    UUID userId,
+    BigDecimal deliveryFee,
+    String deliveryStreet,
+    String deliveryNumber,
+    String deliveryCity,
+    String deliveryNeighborhood,
+    String deliveryZipCode
 ) 
 {
     public static SaleResponse from(@NonNull SaleOutput output) {
@@ -29,7 +37,14 @@ public record SaleResponse(
                 output.items()
                         .stream()
                         .map(SaleItemResponse::from)
-                        .toList()
+                        .toList(),
+                output.userId(),
+                output.deliveryFee(),
+                output.deliveryStreet(),
+                output.deliveryNumber(),
+                output.deliveryCity(),
+                output.deliveryNeighborhood(),
+                output.deliveryZipCode()
         );
     }
 }

@@ -7,6 +7,11 @@ public record CreateStoreInput(
         LocalTime openingTime,
         LocalTime closingTime,
         int maxOrdersInProgress,
-        boolean automaticPause
+        boolean automaticPause,
+        String addressStreet,
+        String addressNumber,
+        String addressNeighborhood,
+        String addressCity,
+        String addressZipCode
 ) {
 }

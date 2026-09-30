@@ -1,10 +1,10 @@
 package bti.pds.dinner.store.domain;
 
-import java.time.LocalTime;
-import java.util.Objects;
-
 import bti.pds.dinner.store.domain.exception.InvalidStoreConfigurationException;
 import lombok.Getter;
+
+import java.time.LocalTime;
+import java.util.Objects;
 
 @Getter
 public class Store {
@@ -16,6 +16,11 @@ public class Store {
     private boolean automaticPause;
     private StoreStatus status;
     private StoreStatus manualStatus;
+    private String addressStreet;
+    private String addressNumber;
+    private String addressNeighborhood;
+    private String addressCity;
+    private String addressZipCode;
 
     public Store(
             Long id,
@@ -25,7 +30,12 @@ public class Store {
             int maxOrdersInProgress,
             boolean automaticPause,
             StoreStatus status,
-            StoreStatus manualStatus
+            StoreStatus manualStatus,
+            String addressStreet,
+            String addressNumber,
+            String addressNeighborhood,
+            String addressCity,
+            String addressZipCode
     ) {
         validateName(name);
         validateSettings(openingTime, closingTime, maxOrdersInProgress);
@@ -37,6 +47,11 @@ public class Store {
         this.automaticPause = automaticPause;
         this.status = Objects.requireNonNull(status, "Status is required");
         this.manualStatus = manualStatus;
+        this.addressStreet = addressStreet;
+        this.addressNumber = addressNumber;
+        this.addressNeighborhood = addressNeighborhood;
+        this.addressCity = addressCity;
+        this.addressZipCode = addressZipCode;
     }
 
     public Store(
@@ -46,9 +61,14 @@ public class Store {
             LocalTime closingTime,
             int maxOrdersInProgress,
             boolean automaticPause,
-            StoreStatus status
+            StoreStatus status,
+            String addressStreet,
+            String addressNumber,
+            String addressNeighborhood,
+            String addressCity,
+            String addressZipCode
     ) {
-        this(id, name, openingTime, closingTime, maxOrdersInProgress, automaticPause, status, null);
+        this(id, name, openingTime, closingTime, maxOrdersInProgress, automaticPause, status, null, addressStreet, addressNumber, addressNeighborhood, addressCity, addressZipCode);
     }
 
     public void updateSettings(

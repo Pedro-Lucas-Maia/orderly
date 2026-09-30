@@ -13,7 +13,12 @@ public record StoreResponse(
         int maxOrdersInProgress,
         boolean automaticPause,
         StoreStatus status,
-        StoreStatus manualStatus
+        StoreStatus manualStatus,
+        String addressStreet,
+        String addressNumber,
+        String addressNeighborhood,
+        String addressCity,
+        String addressZipCode
 ) {
     public static StoreResponse from(StoreOutput output) {
         return new StoreResponse(
@@ -24,7 +29,12 @@ public record StoreResponse(
                 output.maxOrdersInProgress(),
                 output.automaticPause(),
                 output.status(),
-                output.manualStatus()
+                output.manualStatus(),
+                output.addressStreet(),
+                output.addressNumber(),
+                output.addressNeighborhood(),
+                output.addressCity(),
+                output.addressZipCode()
         );
     }
 }

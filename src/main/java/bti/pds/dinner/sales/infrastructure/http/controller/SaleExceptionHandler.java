@@ -28,7 +28,7 @@ public class SaleExceptionHandler {
         return error(HttpStatus.CONFLICT, exception, request);
     }
 
-    @ExceptionHandler({InvalidSaleItemException.class, SaleException.class, IllegalArgumentException.class})
+    @ExceptionHandler({InvalidSaleItemException.class, SaleException.class, IllegalArgumentException.class, bti.pds.dinner.sales.domain.exception.OutOfDeliveryAreaException.class})
     public ResponseEntity<ErrorResponse> handleBadRequest(RuntimeException exception, HttpServletRequest request) {
         return error(HttpStatus.BAD_REQUEST, exception, request);
     }
