@@ -8,6 +8,8 @@ import org.jspecify.annotations.NonNull;
 import bti.pds.dinner.stock.application.input.RegisterMovementInput;
 import bti.pds.dinner.stock.domain.MovementType;
 
+import java.time.LocalDate;
+
 public record RegisterMovementRequest(
         @NotNull(message = "Type is required")
         MovementType type,
@@ -16,13 +18,16 @@ public record RegisterMovementRequest(
         int quantity,
 
         @NotBlank(message = "Reason is required")
-        String reason
+        String reason,
+
+        LocalDate expiresAt
 ) {
     public static RegisterMovementInput toInput(@NonNull RegisterMovementRequest request) {
         return new RegisterMovementInput(
                 request.type(),
                 request.quantity(),
-                request.reason()
+                request.reason(),
+                request.expiresAt()
         );
     }
 }
