@@ -47,7 +47,12 @@ class StoreServiceTest {
                 LocalTime.of(20, 0),
                 3,
                 true,
-                StoreStatus.FECHADA
+                StoreStatus.FECHADA,
+                "Rua",
+                "1",
+                "Centro",
+                "Natal",
+                "59000-000"
         );
         FakeStoreRepository stores = new FakeStoreRepository(firstStore, secondStore);
         StoreService service = new StoreService(stores, storeId -> storeId == 1L ? 3 : 0);
@@ -66,7 +71,12 @@ class StoreServiceTest {
                 LocalTime.of(20, 0),
                 3,
                 true,
-                StoreStatus.FECHADA
+                StoreStatus.FECHADA,
+                "Rua",
+                "1",
+                "Centro",
+                "Natal",
+                "59000-000"
         );
     }
 

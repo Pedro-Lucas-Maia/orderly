@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -27,7 +28,7 @@ class SaleServiceTest {
         FakeSaleRepository sales = new FakeSaleRepository();
 
         SaleService service = new SaleService(sales, products, stock, storeId -> true);
-        SaleOutput createdSale = service.createSale(new CreateSaleInput(1L, "Mesa 4", List.of(
+        SaleOutput createdSale = service.createSale(saleInput(1L, "Mesa 4", List.of(
                 new SaleItemInput(1L, 2), new SaleItemInput(2L, 1))));
 
         assertEquals(SaleStatus.PENDING, createdSale.status());
@@ -54,7 +55,7 @@ class SaleServiceTest {
         FakeSaleRepository sales = new FakeSaleRepository();
 
         assertThrows(InvalidSaleStateException.class, () -> new SaleService(sales, products, stock, storeId -> true)
-                .createSale(new CreateSaleInput(1L, null, List.of(new SaleItemInput(1L, 1)))));
+                .createSale(saleInput(1L, null, List.of(new SaleItemInput(1L, 1)))));
 
         assertEquals(10, stock.balances.get(10L));
         assertEquals(1, stock.balances.get(11L));
@@ -68,7 +69,7 @@ class SaleServiceTest {
         products.recipes.put(1L, List.of(new RecipeItem(10L, 2)));
         FakeStockRepository stock = new FakeStockRepository(Map.of(10L, 0));
         FakeSaleRepository sales = new FakeSaleRepository();
-        Sale sale = new Sale(1L, "Cliente desistiu");
+        Sale sale = new Sale(1L, "Cliente desistiu", new UserId(UUID.randomUUID()), BigDecimal.ZERO, "Rua", "1", "Natal", "Centro", "59000-000");
         sale.addItem(1L, 3, new BigDecimal("10"));
         sale.confirm();
         sales.saved = sale;
@@ -87,7 +88,7 @@ class SaleServiceTest {
 
         assertThrows(StoreUnavailableException.class, () -> new SaleService(
                 sales, products, stock, storeId -> false
-        ).createSale(new CreateSaleInput(1L, null, List.of(new SaleItemInput(1L, 1)))));
+        ).createSale(saleInput(1L, null, List.of(new SaleItemInput(1L, 1)))));
 
         assertNull(sales.saved);
     }
@@ -149,5 +150,19 @@ class SaleServiceTest {
         public List<Sale> findAll() {
             return saved == null ? List.of() : List.of(saved);
         }
+    }
+
+    private static CreateSaleInput saleInput(Long storeId, String observation, List<SaleItemInput> items) {
+        return new CreateSaleInput(
+                storeId,
+                observation,
+                items,
+                UUID.randomUUID(),
+                "Rua",
+                "1",
+                "Natal",
+                "Centro",
+                "59000-000"
+        );
     }
 }
