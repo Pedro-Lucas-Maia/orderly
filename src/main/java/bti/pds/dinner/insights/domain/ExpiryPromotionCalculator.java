@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -54,7 +55,7 @@ public final class ExpiryPromotionCalculator {
 
                     List<SuggestedProduct> suggested = productsByItem.getOrDefault(lot.stockItemId(), List.of()).stream()
                             .map(demandByProduct::get)
-                            .filter(java.util.Objects::nonNull)
+                            .filter(Objects::nonNull)
                             .sorted(Comparator
                                     .comparingInt(DemandForecastCalculator.ProductDemand::predictedQuantity).reversed()
                                     .thenComparing(DemandForecastCalculator.ProductDemand::unitPrice, Comparator.reverseOrder())
