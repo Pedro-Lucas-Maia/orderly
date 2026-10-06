@@ -33,7 +33,7 @@ VALUES (
     'Administrador', 
     '00000000000', 
     'admin@orderly.com', 
-    '$2a$10$XgG.f.K8D2m8/fH1v3M/.uTqYf.rZ/tO2sL5.s9bO/vR.X8cR6j', -- senha: admin123
+    '{bcrypt}$2a$10$dPrFUhotGLpzmv1xXfE.KOqYeLOnJyu7BHrwz2.mI1ggBorABe1o.', -- senha: admin123
     'b30349f5-1049-43c2-841f-1393663a75f1', -- ID do ROLE_ADMIN inserido na V1__create_tables.sql
     false, 
     true, 
