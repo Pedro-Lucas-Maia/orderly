@@ -16,6 +16,7 @@ import org.jspecify.annotations.NonNull;
 
 import bti.pds.dinner.stock.domain.MovementType;
 import bti.pds.dinner.stock.domain.StockItemId;
+import bti.pds.dinner.stock.domain.StockLotId;
 import bti.pds.dinner.stock.domain.StockMovement;
 import bti.pds.dinner.stock.domain.StockMovementId;
 
@@ -45,6 +46,9 @@ public class StockMovementEntity {
 
     private String reason;
 
+    @Column(name = "lot_id")
+    private Long lotId;
+
     public static StockMovementEntity from(@NonNull StockMovement stockMovement) {
         return StockMovementEntity.builder()
                 .id(stockMovement.getId() != null ? stockMovement.getId().value() : null)
@@ -53,6 +57,7 @@ public class StockMovementEntity {
                 .quantity(stockMovement.getQuantity())
                 .occurredAt(stockMovement.getOccurredAt())
                 .reason(stockMovement.getReason())
+                .lotId(stockMovement.getLotId() != null ? stockMovement.getLotId().value() : null)
                 .build();
     }
 
@@ -64,6 +69,7 @@ public class StockMovementEntity {
                 .quantity(entity.getQuantity())
                 .occurredAt(entity.getOccurredAt())
                 .reason(entity.getReason())
+                .lotId(entity.getLotId() != null ? new StockLotId(entity.getLotId()) : null)
                 .build();
     }
 }

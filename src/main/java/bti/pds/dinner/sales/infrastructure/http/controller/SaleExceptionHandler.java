@@ -23,8 +23,8 @@ public class SaleExceptionHandler {
         return error(HttpStatus.NOT_FOUND, exception, request);
     }
 
-    @ExceptionHandler({InvalidSaleStateException.class, StoreUnavailableException.class})
-    public ResponseEntity<ErrorResponse> handleConflict(InvalidSaleStateException exception, HttpServletRequest request) {
+    @ExceptionHandler({InvalidSaleStateException.class, StoreUnavailableException.class, bti.pds.dinner.stock.domain.exception.InsufficientStockException.class})
+    public ResponseEntity<ErrorResponse> handleConflict(RuntimeException exception, HttpServletRequest request) {
         return error(HttpStatus.CONFLICT, exception, request);
     }
 

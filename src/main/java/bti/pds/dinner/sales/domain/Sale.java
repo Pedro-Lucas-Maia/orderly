@@ -56,8 +56,10 @@ public class Sale {
         var subTotal =  items.stream()
                 .map(SaleItem::getSubtotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        return subTotal.add(deliveryFee);
+        if (deliveryFee == null) {
+            return subTotal;
+        }
+        return deliveryFee.add(subTotal);
     }
 
     public void confirm() {

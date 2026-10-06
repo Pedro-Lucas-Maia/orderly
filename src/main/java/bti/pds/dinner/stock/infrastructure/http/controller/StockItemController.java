@@ -18,6 +18,7 @@ import bti.pds.dinner.stock.infrastructure.http.request.CreateStockItemRequest;
 import bti.pds.dinner.stock.infrastructure.http.request.RegisterMovementRequest;
 import bti.pds.dinner.stock.infrastructure.http.request.UpdateStockItemRequest;
 import bti.pds.dinner.stock.infrastructure.http.response.StockItemResponse;
+import bti.pds.dinner.stock.infrastructure.http.response.StockLotResponse;
 
 import java.util.List;
 
@@ -77,6 +78,14 @@ public class StockItemController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         stockItemService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/api/stock-items/{id}/lots")
+    public ResponseEntity<List<StockLotResponse>> listLots(@PathVariable Long id) {
+        List<StockLotResponse> response = stockItemService.listLots(id).stream()
+                .map(StockLotResponse::from)
+                .toList();
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/api/stock-items/{id}/movements")
