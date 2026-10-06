@@ -1,7 +1,8 @@
 package bti.pds.dinner.sales.domain;
 
 public enum SaleStatus {
-    PENDING,
-    CONFIRMED,
-    CANCELLED
+    PENDENTE,
+    EM_PREPARO,
+    EM_ROTA,
+    CANCELADA
 }

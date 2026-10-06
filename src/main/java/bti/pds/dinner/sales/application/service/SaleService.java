@@ -66,12 +66,9 @@ public class SaleService {
     public SaleOutput confirmSale(String saleIdStr) {
         Sale sale = findSale(saleIdStr);
 
-        if (sale.getStatus() != SaleStatus.PENDING) {
-            throw new InvalidSaleStateException("Only PENDING sales can be confirmed.");
+        if (sale.getStatus() != SaleStatus.PENDENTE) {
+            throw new InvalidSaleStateException("Only PENDENTE sales can be confirmed.");
         }
-
-        Map<Long, Integer> totalConsumption = calculateConsumptionFromSale(sale);
-        validateStockAvailability(totalConsumption);
 
         sale.confirm();
         return toOutput(saleRepository.save(sale));
@@ -81,10 +78,10 @@ public class SaleService {
     public void cancelSale(String saleIdStr) {
         Sale sale = findSale(saleIdStr);
 
-        if (sale.getStatus() == SaleStatus.CANCELLED) {
+        if (sale.getStatus() == SaleStatus.CANCELADA) {
             throw new InvalidSaleStateException("This sale is already cancelled.");
         }
-        if (sale.getStatus() == SaleStatus.CONFIRMED) {
+        if (sale.getStatus() == SaleStatus.EM_PREPARO || sale.getStatus() == SaleStatus.PENDENTE) {
             Map<Long, Integer> totalToReturn = calculateConsumptionFromSale(sale);
             restoreStock(totalToReturn, "Cancel sale #" + saleIdStr);
         }
