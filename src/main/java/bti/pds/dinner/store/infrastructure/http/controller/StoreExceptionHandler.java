@@ -4,6 +4,8 @@ import bti.pds.dinner.common.http.ErrorResponse;
 import bti.pds.dinner.store.domain.exception.StoreNotFoundException;
 import bti.pds.dinner.store.domain.exception.InvalidStoreConfigurationException;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -11,7 +13,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
 
-@RestControllerAdvice(basePackages = "bti.pds.dinner.store")
+@Order(Ordered.HIGHEST_PRECEDENCE)
+@RestControllerAdvice
 public class StoreExceptionHandler {
 
     @ExceptionHandler(StoreNotFoundException.class)

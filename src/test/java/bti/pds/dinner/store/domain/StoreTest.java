@@ -65,7 +65,12 @@ class StoreTest {
                 LocalTime.of(20, 0),
                 3,
                 automaticPause,
-                StoreStatus.FECHADA
+                StoreStatus.FECHADA,
+                "Rua",
+                "1",
+                "Centro",
+                "Natal",
+                "59000-000"
         );
     }
 }
