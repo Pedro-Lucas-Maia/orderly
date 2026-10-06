@@ -28,22 +28,22 @@ class SaleServiceTest {
 
         SaleService service = new SaleService(sales, products, stock, storeId -> true);
         SaleOutput createdSale = service.createSale(new CreateSaleInput(1L, "Mesa 4", List.of(
-                new SaleItemInput(1L, 2), new SaleItemInput(2L, 1))));
+                new SaleItemInput(1L, 2), new SaleItemInput(2L, 1)), java.util.UUID.randomUUID(), "Rua A", "123", "Natal", "Ponta Negra", "59000-000"));
 
-        assertEquals(SaleStatus.PENDING, createdSale.status());
-        assertEquals(5, stock.balances.get(10L));
-        assertEquals(2, stock.balances.get(11L));
-        assertEquals(0, stock.deductions.size());
+        assertEquals(SaleStatus.PENDENTE, createdSale.status());
+        assertEquals(0, stock.balances.get(10L));
+        assertEquals(0, stock.balances.get(11L));
+        assertEquals(2, stock.deductions.size());
 
         SaleOutput output = service.confirmSale(createdSale.saleId());
 
-        assertEquals(SaleStatus.CONFIRMED, output.status());
-        assertEquals(new BigDecimal("30"), output.totalAmount());
+        assertEquals(SaleStatus.EM_PREPARO, output.status());
+        assertEquals(new BigDecimal("35.00"), output.totalAmount()); // 30 of products + 5 of delivery
         assertEquals(2, output.items().size());
         assertEquals(0, stock.balances.get(10L));
         assertEquals(0, stock.balances.get(11L));
         assertEquals(2, stock.deductions.size());
-        assertEquals(SaleStatus.CONFIRMED, sales.saved.getStatus());
+        assertEquals(SaleStatus.EM_PREPARO, sales.saved.getStatus());
     }
 
     @Test
@@ -54,7 +54,7 @@ class SaleServiceTest {
         FakeSaleRepository sales = new FakeSaleRepository();
 
         assertThrows(InvalidSaleStateException.class, () -> new SaleService(sales, products, stock, storeId -> true)
-                .createSale(new CreateSaleInput(1L, null, List.of(new SaleItemInput(1L, 1)))));
+                .createSale(new CreateSaleInput(1L, null, List.of(new SaleItemInput(1L, 1)), java.util.UUID.randomUUID(), "Rua A", "123", "Natal", "Ponta Negra", "59000-000")));
 
         assertEquals(10, stock.balances.get(10L));
         assertEquals(1, stock.balances.get(11L));
@@ -68,7 +68,7 @@ class SaleServiceTest {
         products.recipes.put(1L, List.of(new RecipeItem(10L, 2)));
         FakeStockRepository stock = new FakeStockRepository(Map.of(10L, 0));
         FakeSaleRepository sales = new FakeSaleRepository();
-        Sale sale = new Sale(1L, "Cliente desistiu");
+        Sale sale = new Sale(1L, "Cliente desistiu", new UserId(java.util.UUID.randomUUID()), new BigDecimal("5.00"), "Rua A", "123", "Natal", "Ponta Negra", "59000-000");
         sale.addItem(1L, 3, new BigDecimal("10"));
         sale.confirm();
         sales.saved = sale;
@@ -76,7 +76,7 @@ class SaleServiceTest {
         new SaleService(sales, products, stock, storeId -> true).cancelSale(sale.getId().uuid().toString());
 
         assertEquals(6, stock.balances.get(10L));
-        assertEquals(SaleStatus.CANCELLED, sales.saved.getStatus());
+        assertEquals(SaleStatus.CANCELADA, sales.saved.getStatus());
     }
 
     @Test
@@ -87,7 +87,7 @@ class SaleServiceTest {
 
         assertThrows(StoreUnavailableException.class, () -> new SaleService(
                 sales, products, stock, storeId -> false
-        ).createSale(new CreateSaleInput(1L, null, List.of(new SaleItemInput(1L, 1)))));
+        ).createSale(new CreateSaleInput(1L, null, List.of(new SaleItemInput(1L, 1)), java.util.UUID.randomUUID(), "Rua A", "123", "Natal", "Ponta Negra", "59000-000")));
 
         assertNull(sales.saved);
     }

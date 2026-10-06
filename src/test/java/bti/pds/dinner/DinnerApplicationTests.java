@@ -8,7 +8,10 @@ import org.springframework.context.annotation.Import;
 @SpringBootTest(properties = {
     "jwt.public.key=classpath:env/app.pub",
     "jwt.secret=classpath:env/app.key",
-    "resend.api.key=dummy_api_key"
+    "resend.api.key=dummy_api_key",
+    "cloudinary.cloud-name=dummy",
+    "cloudinary.api-key=dummy",
+    "cloudinary.api-secret=dummy"
 })
 class DinnerApplicationTests {
 
