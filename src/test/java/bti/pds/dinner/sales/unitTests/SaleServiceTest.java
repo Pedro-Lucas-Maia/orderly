@@ -3,7 +3,9 @@ package bti.pds.dinner.sales.unitTests;
 import bti.pds.dinner.sales.application.input.CreateSaleInput;
 import bti.pds.dinner.sales.application.input.SaleItemInput;
 import bti.pds.dinner.sales.application.output.SaleOutput;
+import bti.pds.dinner.sales.application.service.RecipeConsumptionService;
 import bti.pds.dinner.sales.application.service.SaleService;
+import bti.pds.dinner.sales.application.service.SaleStatusService;
 import bti.pds.dinner.sales.domain.*;
 import bti.pds.dinner.sales.domain.exception.InvalidSaleStateException;
 import bti.pds.dinner.sales.domain.exception.StoreUnavailableException;
@@ -26,7 +28,10 @@ class SaleServiceTest {
         FakeStockRepository stock = new FakeStockRepository(Map.of(10L, 5, 11L, 2));
         FakeSaleRepository sales = new FakeSaleRepository();
 
-        SaleService service = new SaleService(sales, products, stock, storeId -> true);
+        RecipeConsumptionService recipeConsumptionService = new RecipeConsumptionService(products);
+        SaleService service = new SaleService(sales, products, stock, storeId -> true, recipeConsumptionService);
+        SaleStatusService statusService = new SaleStatusService(stock, sales, recipeConsumptionService);
+
         SaleOutput createdSale = service.createSale(new CreateSaleInput(1L, "Mesa 4", List.of(
                 new SaleItemInput(1L, 2), new SaleItemInput(2L, 1)), java.util.UUID.randomUUID(), "Rua A", "123", "Natal", "Ponta Negra", "59000-000"));
 
@@ -35,7 +40,7 @@ class SaleServiceTest {
         assertEquals(0, stock.balances.get(11L));
         assertEquals(2, stock.deductions.size());
 
-        SaleOutput output = service.confirmSale(createdSale.saleId());
+        SaleOutput output = statusService.confirmSale(createdSale.saleId());
 
         assertEquals(SaleStatus.EM_PREPARO, output.status());
         assertEquals(new BigDecimal("35.00"), output.totalAmount()); // 30 of products + 5 of delivery
@@ -53,7 +58,10 @@ class SaleServiceTest {
         FakeStockRepository stock = new FakeStockRepository(Map.of(10L, 10, 11L, 1));
         FakeSaleRepository sales = new FakeSaleRepository();
 
-        assertThrows(InvalidSaleStateException.class, () -> new SaleService(sales, products, stock, storeId -> true)
+        RecipeConsumptionService recipeConsumptionService = new RecipeConsumptionService(products);
+        SaleService service = new SaleService(sales, products, stock, storeId -> true, recipeConsumptionService);
+
+        assertThrows(InvalidSaleStateException.class, () -> service
                 .createSale(new CreateSaleInput(1L, null, List.of(new SaleItemInput(1L, 1)), java.util.UUID.randomUUID(), "Rua A", "123", "Natal", "Ponta Negra", "59000-000")));
 
         assertEquals(10, stock.balances.get(10L));
@@ -73,7 +81,10 @@ class SaleServiceTest {
         sale.confirm();
         sales.saved = sale;
 
-        new SaleService(sales, products, stock, storeId -> true).cancelSale(sale.getId().uuid().toString());
+        RecipeConsumptionService recipeConsumptionService = new RecipeConsumptionService(products);
+        SaleStatusService statusService = new SaleStatusService(stock, sales, recipeConsumptionService);
+
+        statusService.cancelSale(sale.getId().uuid().toString());
 
         assertEquals(6, stock.balances.get(10L));
         assertEquals(SaleStatus.CANCELADA, sales.saved.getStatus());
@@ -85,9 +96,10 @@ class SaleServiceTest {
         FakeStockRepository stock = new FakeStockRepository(Map.of());
         FakeSaleRepository sales = new FakeSaleRepository();
 
-        assertThrows(StoreUnavailableException.class, () -> new SaleService(
-                sales, products, stock, storeId -> false
-        ).createSale(new CreateSaleInput(1L, null, List.of(new SaleItemInput(1L, 1)), java.util.UUID.randomUUID(), "Rua A", "123", "Natal", "Ponta Negra", "59000-000")));
+        RecipeConsumptionService recipeConsumptionService = new RecipeConsumptionService(products);
+        SaleService service = new SaleService(sales, products, stock, storeId -> false, recipeConsumptionService);
+
+        assertThrows(StoreUnavailableException.class, () -> service.createSale(new CreateSaleInput(1L, null, List.of(new SaleItemInput(1L, 1)), java.util.UUID.randomUUID(), "Rua A", "123", "Natal", "Ponta Negra", "59000-000")));
 
         assertNull(sales.saved);
     }
@@ -147,6 +159,11 @@ class SaleServiceTest {
 
         @Override
         public List<Sale> findAll() {
+            return saved == null ? List.of() : List.of(saved);
+        }
+
+        @Override
+        public List<Sale> findByUserId(UserId userId) {
             return saved == null ? List.of() : List.of(saved);
         }
     }
