@@ -29,7 +29,7 @@ INSERT INTO users (
     id, name, cpf, email, password, role_id, locked, enabled, created_at, updated_at, failed_login_attempts
 )
 VALUES (
-    'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d', 
+    '1e86ee0b-3d68-4f55-bd35-e7781bd1f3eb',
     'Administrador', 
     '00000000000', 
     'admin@orderly.com', 
