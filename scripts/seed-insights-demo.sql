@@ -45,7 +45,7 @@ store1 AS (
     SELECT gen_random_uuid(),
            1,
            sale_date + TIME '18:30',
-           'CONFIRMED',
+           'ENTREGUE',
            CASE
                WHEN EXTRACT(DOW FROM sale_date) = 2 THEN (18 * 28.90) + (10 * 34.90)
                ELSE (22 * 28.90) + (14 * 34.90)
@@ -60,7 +60,7 @@ store2 AS (
     SELECT gen_random_uuid(),
            2,
            sale_date + TIME '19:15',
-           'CONFIRMED',
+           'ENTREGUE',
            CASE
                WHEN EXTRACT(DOW FROM sale_date) = 2 THEN (8 * 29.90) + (12 * 22.90)
                ELSE (10 * 29.90) + (16 * 22.90)
