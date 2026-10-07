@@ -3,6 +3,7 @@ package bti.pds.dinner.sales.infrastructure.http.controller;
 import bti.pds.dinner.sales.application.service.CheckoutService;
 import bti.pds.dinner.sales.application.service.SaleService;
 import bti.pds.dinner.sales.application.service.SaleStatusService;
+import bti.pds.dinner.sales.domain.SaleStatus;
 import bti.pds.dinner.sales.infrastructure.http.request.CheckoutRequest;
 import bti.pds.dinner.sales.infrastructure.http.response.SaleResponse;
 import jakarta.validation.Valid;
@@ -47,9 +48,9 @@ public class SaleController {
         return ResponseEntity.ok(java.util.Map.of("deliveryFee", fee));
     }
 
-    @GetMapping
-    public ResponseEntity<List<SaleResponse>> listSales() {
-        List<SaleResponse> responses = saleService.listSales()
+    @GetMapping()
+    public ResponseEntity<List<SaleResponse>> listSales(@RequestParam(required = false) SaleStatus saleStatus) {
+        List<SaleResponse> responses = saleService.listSales(saleStatus)
                 .stream()
                 .map(SaleResponse::from)
                 .toList();

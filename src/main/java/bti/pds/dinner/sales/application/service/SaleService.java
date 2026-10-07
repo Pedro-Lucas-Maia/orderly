@@ -65,8 +65,14 @@ public class SaleService {
     }
 
     @Transactional(readOnly = true)
-    public List<SaleOutput> listSales() {
-        return saleRepository.findAll()
+    public List<SaleOutput> listSales(SaleStatus saleStatus) {
+        if (saleStatus == null) {
+            return saleRepository.findAll()
+                    .stream()
+                    .map(SaleOutput::from)
+                    .toList();
+        }
+        return saleRepository.findAll(saleStatus)
                 .stream()
                 .map(SaleOutput::from)
                 .toList();
