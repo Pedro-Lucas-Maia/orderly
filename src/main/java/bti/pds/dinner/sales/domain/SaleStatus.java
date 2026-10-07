@@ -4,5 +4,6 @@ public enum SaleStatus {
     PENDENTE,
     EM_PREPARO,
     EM_ROTA,
+    ENTREGUE,
     CANCELADA
 }

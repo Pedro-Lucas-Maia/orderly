@@ -17,7 +17,7 @@ public interface InsightsSaleQueryRepository extends Repository<SaleEntity, UUID
                    CAST(SUM(si.quantity) AS integer)
             FROM sales s
             INNER JOIN sale_items si ON si.sale_id = s.id
-            WHERE s.status = 'CONFIRMED'
+            WHERE s.status = 'ENTREGUE'
               AND s.store_id = :storeId
               AND s.date >= :fromInclusive
               AND s.date < :toExclusive
@@ -35,7 +35,7 @@ public interface InsightsSaleQueryRepository extends Repository<SaleEntity, UUID
                    CAST(SUM(si.quantity) AS integer)
             FROM sales s
             INNER JOIN sale_items si ON si.sale_id = s.id
-            WHERE s.status = 'CONFIRMED'
+            WHERE s.status = 'ENTREGUE'
               AND s.date >= :fromInclusive
               AND s.date < :toExclusive
             GROUP BY CAST(s.date AS date), si.product_id
