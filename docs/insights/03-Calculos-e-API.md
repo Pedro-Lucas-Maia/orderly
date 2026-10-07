@@ -19,7 +19,7 @@ GET /api/insights
 ```
 
 TODO: listagem **global** provisória — remover quando o front passar a usar o `storeId` (mesmo padrão de `GET /api/stock-items`).  
-A demanda soma vendas `CONFIRMED` de **todas** as lojas; o estoque continua compartilhado.
+A demanda soma vendas `ENTREGUE` de **todas** as lojas; o estoque continua compartilhado.
 
 **Autenticação:** cookie JWT (como o resto da API) — qualquer usuário autenticado na V1.  
 **Autorização por role:** pendente; ver [Autorizacao-por-Roles.md](../Autorizacao-por-Roles.md).
@@ -69,7 +69,7 @@ Injetar `java.time.Clock` nos services para testes fixarem a data.
 1. `targetDate` = data de referência (ex. terça, 31/03/2026).
 2. `weekday` = dia da semana de `targetDate`.
 3. Listar todas as datas `d` nos últimos `forecast-weeks` semanas onde `d` tem o **mesmo weekday** que `targetDate`.
-4. Para cada produto ativo e cada data `d`, somar unidades vendidas na loja em vendas `CONFIRMED` (via `sale_items`).
+4. Para cada produto ativo e cada data `d`, somar unidades vendidas na loja em vendas `ENTREGUE` (via `sale_items`).
 5. **Média** desses valores (incluir **zero** nos dias em que não houve venda daquele produto).
 
 **Por que incluir zero?**  
@@ -79,7 +79,7 @@ Se você só média “dias em que vendeu”, uma terça com 50 burgers e outra 
 
 Loja 1, produto **Classic Burger** (id=1), `forecast-weeks=4`, `targetDate` = terça.
 
-| Terça (histórico) | Unidades vendidas (CONFIRMED) |
+| Terça (histórico) | Unidades vendidas (ENTREGUE) |
 |---|---|
 | T-7 dias | 20 |
 | T-14 dias | 0 |

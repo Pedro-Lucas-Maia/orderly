@@ -11,7 +11,7 @@ O módulo `insights` monta um **briefing do dia** para o dono: números e listas
 
 Ele **não** altera estoque, preço nem vendas. Só lê:
 
-- vendas `CONFIRMED` (por loja ou todas);
+- vendas `ENTREGUE` (por loja ou todas);
 - produtos ativos e composição (receita);
 - saldo atual dos insumos;
 - lotes abertos com validade.
@@ -121,7 +121,7 @@ Configuração (`application.properties`):
 
 1. Pega o dia de referência (`date` ou hoje).
 2. Lista as N semanas anteriores **no mesmo dia da semana** (ex.: 8 terças). O próprio dia alvo **não entra**.
-3. Para cada produto **ativo**, soma o que vendeu nessas datas (venda `CONFIRMED`). Dia sem venda conta **zero**.
+3. Para cada produto **ativo**, soma o que vendeu nessas datas (venda `ENTREGUE`). Dia sem venda conta **zero**.
 4. Divide pelo número de semanas e arredonda para inteiro → `predictedQuantity`.
 5. Confiança: HIGH se há ≥ 6 semanas com sinal; MEDIUM se ≥ 3; senão LOW. Se **não vendeu nada** na janela, previsão 0, `sampleSize` 0, LOW.
 
