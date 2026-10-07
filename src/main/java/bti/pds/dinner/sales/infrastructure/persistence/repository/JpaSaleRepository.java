@@ -4,6 +4,7 @@ package bti.pds.dinner.sales.infrastructure.persistence.repository;
 import bti.pds.dinner.sales.domain.Sale;
 import bti.pds.dinner.sales.domain.SaleId;
 import bti.pds.dinner.sales.domain.SaleRepository;
+import bti.pds.dinner.sales.domain.UserId;
 import bti.pds.dinner.sales.infrastructure.persistence.entity.SaleEntity;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Repository;
@@ -27,13 +28,21 @@ public class JpaSaleRepository implements SaleRepository {
 
     @Override
     public Optional<Sale> findById(@NonNull SaleId id) {
-        return jpaRepository.findById(id.uuid().toString())
+        return jpaRepository.findById(id.uuid())
                 .map(SaleEntity::toDomain);
     }
 
     @Override
     public List<Sale> findAll() {
         return jpaRepository.findAll()
+                .stream()
+                .map(SaleEntity::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<Sale> findByUserId(@NonNull UserId userId) {
+        return jpaRepository.findByUserId(userId.uuid())
                 .stream()
                 .map(SaleEntity::toDomain)
                 .toList();

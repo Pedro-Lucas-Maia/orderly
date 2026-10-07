@@ -7,4 +7,5 @@ public interface SaleRepository {
     Sale save(Sale sale);
     Optional<Sale> findById(SaleId id);
     List<Sale> findAll();
+    List<Sale> findByUserId(UserId id);
 }
