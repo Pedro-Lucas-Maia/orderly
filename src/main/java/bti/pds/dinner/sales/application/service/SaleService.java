@@ -2,7 +2,6 @@ package bti.pds.dinner.sales.application.service;
 
 import bti.pds.dinner.sales.application.input.CreateSaleInput;
 import bti.pds.dinner.sales.application.input.SaleItemInput;
-import bti.pds.dinner.sales.application.output.SaleItemOutput;
 import bti.pds.dinner.sales.application.output.SaleOutput;
 import bti.pds.dinner.sales.domain.*;
 import bti.pds.dinner.sales.domain.exception.*;
@@ -22,13 +21,16 @@ public class SaleService {
     private final ProductRepository productRepository;
     private final StockRepository stockRepository;
     private final StoreAvailability storeAvailability;
+    private final RecipeConsumptionService recipeConsumptionService;
 
     public SaleService(SaleRepository saleRepository, ProductRepository productRepository,
-            StockRepository stockRepository, StoreAvailability storeAvailability) {
+            StockRepository stockRepository, StoreAvailability storeAvailability,
+            RecipeConsumptionService recipeConsumptionService) {
         this.saleRepository = saleRepository;
         this.productRepository = productRepository;
         this.stockRepository = stockRepository;
         this.storeAvailability = storeAvailability;
+        this.recipeConsumptionService = recipeConsumptionService;
     }
 
     @Transactional
@@ -43,7 +45,7 @@ public class SaleService {
         Map<Long, Integer> totalConsumption = calculateTotalConsumption(input.items());
         validateStockAvailability(totalConsumption);
         deductStock(totalConsumption, "Sale #" + sale.getId().uuid());
-        return toOutput(saleRepository.save(sale));
+        return SaleOutput.from(saleRepository.save(sale));
     }
 
     public BigDecimal calculateDeliveryFee(String street, String number, String neighborhood, String city, String zipCode) {
@@ -62,39 +64,11 @@ public class SaleService {
         };
     }
 
-    @Transactional
-    public SaleOutput confirmSale(String saleIdStr) {
-        Sale sale = findSale(saleIdStr);
-
-        if (sale.getStatus() != SaleStatus.PENDENTE) {
-            throw new InvalidSaleStateException("Only PENDENTE sales can be confirmed.");
-        }
-
-        sale.confirm();
-        return toOutput(saleRepository.save(sale));
-    }
-
-    @Transactional
-    public void cancelSale(String saleIdStr) {
-        Sale sale = findSale(saleIdStr);
-
-        if (sale.getStatus() == SaleStatus.CANCELADA) {
-            throw new InvalidSaleStateException("This sale is already cancelled.");
-        }
-        if (sale.getStatus() == SaleStatus.EM_PREPARO || sale.getStatus() == SaleStatus.PENDENTE) {
-            Map<Long, Integer> totalToReturn = calculateConsumptionFromSale(sale);
-            restoreStock(totalToReturn, "Cancel sale #" + saleIdStr);
-        }
-
-        sale.cancel();
-        saleRepository.save(sale);
-    }
-
     @Transactional(readOnly = true)
     public List<SaleOutput> listSales() {
         return saleRepository.findAll()
                 .stream()
-                .map(this::toOutput)
+                .map(SaleOutput::from)
                 .toList();
     }
 
@@ -103,7 +77,15 @@ public class SaleService {
         SaleId saleId = new SaleId(UUID.fromString(saleIdStr));
         Sale sale = saleRepository.findById(saleId)
                 .orElseThrow(() -> new SaleNotFoundException("Sale not found: " + saleIdStr));
-        return toOutput(sale);
+        return SaleOutput.from(sale);
+    }
+
+    @Transactional(readOnly = true)
+    public List<SaleOutput> ListSalesByUser(String userId) {
+        return saleRepository.findByUserId(new UserId(UUID.fromString(userId)))
+                .stream()
+                .map(SaleOutput::from)
+                .toList();
     }
 
     private void validateInput(CreateSaleInput input) {
@@ -128,26 +110,9 @@ public class SaleService {
     private Map<Long, Integer> calculateTotalConsumption(List<SaleItemInput> items) {
         Map<Long, Integer> totalConsumption = new HashMap<>();
         for (SaleItemInput itemReq : items) {
-            accumulateConsumption(totalConsumption, itemReq.productId(), itemReq.quantity());
+            recipeConsumptionService.accumulateConsumption(totalConsumption, itemReq.productId(), itemReq.quantity());
         }
         return totalConsumption;
-    }
-
-    private Map<Long, Integer> calculateConsumptionFromSale(Sale sale) {
-        Map<Long, Integer> totalConsumption = new HashMap<>();
-        for (SaleItem item : sale.getItems()) {
-            accumulateConsumption(totalConsumption, item.getProductId(), item.getQuantity());
-        }
-        return totalConsumption;
-    }
-
-    private void accumulateConsumption(Map<Long, Integer> totalConsumption,
-            Long productId, int quantity) {
-        List<RecipeItem> recipe = productRepository.getRecipe(productId);
-        for (RecipeItem ingredient : recipe) {
-            int consumedQuantity = ingredient.quantityPerUnit() * quantity;
-            totalConsumption.merge(ingredient.stockItemId(), consumedQuantity, Integer::sum);
-        }
     }
 
     private void validateStockAvailability(Map<Long, Integer> totalConsumption) {
@@ -168,48 +133,5 @@ public class SaleService {
         for (Map.Entry<Long, Integer> entry : totalConsumption.entrySet()) {
             stockRepository.deductStock(entry.getKey(), entry.getValue(), reason);
         }
-    }
-
-    private void restoreStock(Map<Long, Integer> totalToReturn, String reason) {
-        for (Map.Entry<Long, Integer> entry : totalToReturn.entrySet()) {
-            stockRepository.addStock(entry.getKey(), entry.getValue(), reason);
-        }
-    }
-
-    private Sale findSale(String saleIdStr) {
-        SaleId saleId = new SaleId(UUID.fromString(saleIdStr));
-
-        return saleRepository.findById(saleId)
-                .orElseThrow(() -> new SaleNotFoundException("Sale not found: " + saleIdStr));
-    }
-
-    private SaleOutput toOutput(Sale sale) {
-        return new SaleOutput(
-                sale.getId().uuid().toString(),
-                sale.getStoreId(),
-                sale.getDate(),
-                sale.getStatus(),
-                sale.calculateTotal(sale.getDeliveryFee()),
-                sale.getObservation(),
-                sale.getItems().stream()
-                        .map(this::toItemOutput)
-                        .toList(),
-                sale.getUserId().uuid(),
-                sale.getDeliveryFee(),
-                sale.getDeliveryStreet(),
-                sale.getDeliveryNumber(),
-                sale.getDeliveryNeighborhood(),
-                sale.getDeliveryCity(),
-                sale.getDeliveryZipCode()
-        );
-    }
-
-    private SaleItemOutput toItemOutput(SaleItem item) {
-        return new SaleItemOutput(
-                item.getProductId(),
-                item.getQuantity(),
-                item.getUnitPrice(),
-                item.getSubtotal()
-        );
     }
 }
