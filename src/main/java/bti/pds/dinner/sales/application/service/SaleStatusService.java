@@ -36,7 +36,7 @@ public class SaleStatusService {
     @Transactional
     public SaleOutput confirmDelivery(String saleIdStr, UUID userId) {
         Sale sale = findSale(saleIdStr);
-        if (sale.getUserId().equals(userId)) {
+        if (sale.getUserId().uuid().compareTo(userId) == 0) {
             sale.deliver();
             return SaleOutput.from(saleRepository.save(sale));
         }
