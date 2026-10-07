@@ -68,6 +68,12 @@ public class Sale {
         }
         this.status = SaleStatus.EM_PREPARO;
     }
+    public void deliver() {
+        if (this.status != SaleStatus.EM_PREPARO) {
+            throw new InvalidSaleStateException("Only pending sales can be delivered.");
+        }
+        this.status = SaleStatus.ENTREGUE;
+    }
 
     public void cancel() {
         if (this.status == SaleStatus.CANCELADA) {
