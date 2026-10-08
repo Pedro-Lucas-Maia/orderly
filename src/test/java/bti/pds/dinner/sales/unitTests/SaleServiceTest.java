@@ -158,8 +158,14 @@ class SaleServiceTest {
         }
 
         @Override
-        public List<Sale> findAll() {
-            return saved == null ? List.of() : List.of(saved);
+        public List<Sale> findAll(SaleStatus status, java.time.LocalDateTime date) {
+            if (saved == null) return List.of();
+            boolean matchStatus = status == null || saved.getStatus() == status;
+            boolean matchDate = date == null || saved.getDate().isEqual(date);
+            if (matchStatus && matchDate) {
+                return List.of(saved);
+            }
+            return List.of();
         }
 
         @Override
