@@ -68,9 +68,17 @@ public class Sale {
         }
         this.status = SaleStatus.EM_PREPARO;
     }
-    public void deliver() {
+
+    public void dispatch() {
         if (this.status != SaleStatus.EM_PREPARO) {
-            throw new InvalidSaleStateException("Only pending sales can be delivered.");
+            throw new InvalidSaleStateException("Only preparing sales can be dispatched.");
+        }
+        this.status = SaleStatus.EM_ROTA;
+    }
+
+    public void deliver() {
+        if (this.status != SaleStatus.EM_ROTA) {
+            throw new InvalidSaleStateException("Only dispatched sales can be delivered.");
         }
         this.status = SaleStatus.ENTREGUE;
     }
@@ -79,6 +87,10 @@ public class Sale {
         if (this.status == SaleStatus.CANCELADA) {
             throw new InvalidSaleStateException("This sale is already cancelled.");
         }
-        this.status = SaleStatus.CANCELADA;
+        if (this.status == SaleStatus.EM_PREPARO || this.status == SaleStatus.PENDENTE) {
+            this.status = SaleStatus.CANCELADA;
+            return;
+        }
+        throw new InvalidSaleStateException("Only pending or preparing sales can be cancelled.");
     }
 }

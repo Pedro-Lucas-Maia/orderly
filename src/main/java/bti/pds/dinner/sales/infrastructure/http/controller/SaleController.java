@@ -13,7 +13,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 
@@ -32,7 +34,7 @@ public class SaleController {
 
     @PostMapping("/checkout")
     public ResponseEntity<SaleResponse> processSale(@RequestBody @Valid CheckoutRequest request, JwtAuthenticationToken authentication) {
-        var userId = authentication.getToken().getClaimAsString("userId");
+        var userId = getUserId(authentication);
         var output = checkoutService.execute(CheckoutRequest.toInput(request, userId));
         var response = SaleResponse.from(output);
 
@@ -40,12 +42,12 @@ public class SaleController {
     }
 
     @GetMapping("/freight")
-    public ResponseEntity<java.util.Map<String, java.math.BigDecimal>> simulateFreight(
+    public ResponseEntity<Map<String, BigDecimal>> simulateFreight(
             @RequestParam UUID addressId,
             JwtAuthenticationToken authentication) {
-        var userId = UUID.fromString(authentication.getToken().getClaimAsString("userId"));
+        var userId = UUID.fromString(getUserId(authentication));
         var fee = checkoutService.simulateFreight(addressId, userId);
-        return ResponseEntity.ok(java.util.Map.of("deliveryFee", fee));
+        return ResponseEntity.ok(Map.of("deliveryFee", fee));
     }
 
     @GetMapping()
@@ -65,7 +67,7 @@ public class SaleController {
 
     @GetMapping("/me")
     public ResponseEntity<List<SaleResponse>> getSaleByUserId(@NonNull JwtAuthenticationToken authentication) {
-        var user =  authentication.getToken().getClaimAsString("userId");
+        var user =  getUserId(authentication);
         var response = saleService.ListSalesByUser(user)
                 .stream()
                 .map(SaleResponse::from)
@@ -85,10 +87,20 @@ public class SaleController {
         return ResponseEntity.ok(SaleResponse.from(saleStatusService.confirmSale(id)));
     }
 
+    @PostMapping("/{id}/dispatch")
+    public ResponseEntity<SaleResponse> dispatchSale(@PathVariable String id, @NonNull JwtAuthenticationToken authentication) {
+        var  userId = getUserId(authentication);
+        return ResponseEntity.ok(SaleResponse.from(saleStatusService.dispatchDelivery(id, userId)));
+    }
+
     @PostMapping("/{id}/deliver")
     public ResponseEntity<SaleResponse> deliverSale(@PathVariable String id, @NonNull JwtAuthenticationToken authentication) {
-        var userId = UUID.fromString(authentication.getToken().getClaimAsString("userId"));
+        var userId = UUID.fromString(getUserId(authentication));
 
         return ResponseEntity.ok(SaleResponse.from(saleStatusService.confirmDelivery(id, userId)));
+    }
+
+    private String getUserId(@NonNull JwtAuthenticationToken authentication) {
+        return authentication.getToken().getClaimAsString("userId");
     }
 }

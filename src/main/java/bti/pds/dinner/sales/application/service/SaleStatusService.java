@@ -3,7 +3,6 @@ package bti.pds.dinner.sales.application.service;
 import bti.pds.dinner.common.exception.ForbiddenAccessException;
 import bti.pds.dinner.sales.application.output.SaleOutput;
 import bti.pds.dinner.sales.domain.*;
-import bti.pds.dinner.sales.domain.exception.InvalidSaleStateException;
 import bti.pds.dinner.sales.domain.exception.SaleNotFoundException;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
@@ -34,29 +33,37 @@ public class SaleStatusService {
     }
 
     @Transactional
-    public SaleOutput confirmDelivery(String saleIdStr, UUID userId) {
-        Sale sale = findSale(saleIdStr);
-        if (sale.getUserId().uuid().compareTo(userId) == 0) {
-            sale.deliver();
-            return SaleOutput.from(saleRepository.save(sale));
-        }
-        throw new ForbiddenAccessException("Access denied for the requested resource");
+    public SaleOutput dispatchDelivery(String saleId, String userId) {
+        Sale sale = findSale(saleId);
+        checkAuthorization(sale.getUserId().uuid(), UUID.fromString(userId));
+        sale.dispatch();
+        return SaleOutput.from(saleRepository.save(sale));
+    }
+
+    @Transactional
+    public SaleOutput confirmDelivery(String saleId, UUID userId) {
+        Sale sale = findSale(saleId);
+        checkAuthorization(sale.getUserId().uuid(), userId);
+        sale.deliver();
+        return SaleOutput.from(saleRepository.save(sale));
     }
 
     @Transactional
     public void cancelSale(String saleIdStr) {
         Sale sale = findSale(saleIdStr);
 
-        if (sale.getStatus() == SaleStatus.CANCELADA) {
-            throw new InvalidSaleStateException("This sale is already cancelled.");
-        }
-        if (sale.getStatus() == SaleStatus.EM_PREPARO || sale.getStatus() == SaleStatus.PENDENTE) {
-            Map<Long, Integer> totalToReturn = calculateConsumptionFromSale(sale);
-            restoreStock(totalToReturn, "Cancel sale #" + saleIdStr);
-        }
-
         sale.cancel();
+
+        Map<Long, Integer> totalToReturn = calculateConsumptionFromSale(sale);
+        restoreStock(totalToReturn, "Cancel sale #" + saleIdStr);
+
         saleRepository.save(sale);
+    }
+
+    private void checkAuthorization(@NonNull UUID databaseId, UUID inputId) {
+        if(databaseId.compareTo(inputId) != 0) {
+            throw new ForbiddenAccessException("Access denied for the requested resource");
+        }
     }
 
     private void restoreStock(@NonNull Map<Long, Integer> totalToReturn, String reason) {
