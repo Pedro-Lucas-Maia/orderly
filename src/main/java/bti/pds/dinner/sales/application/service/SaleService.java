@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,14 +66,8 @@ public class SaleService {
     }
 
     @Transactional(readOnly = true)
-    public List<SaleOutput> listSales(SaleStatus saleStatus) {
-        if (saleStatus == null) {
-            return saleRepository.findAll()
-                    .stream()
-                    .map(SaleOutput::from)
-                    .toList();
-        }
-        return saleRepository.findAll(saleStatus)
+    public List<SaleOutput> listSales(SaleStatus saleStatus, LocalDateTime date) {
+        return saleRepository.findAll(saleStatus, date)
                 .stream()
                 .map(SaleOutput::from)
                 .toList();

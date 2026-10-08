@@ -6,8 +6,12 @@ import bti.pds.dinner.sales.infrastructure.persistence.entity.SaleEntity;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+
+import static bti.pds.dinner.sales.infrastructure.persistence.repository.SaleEntitySpecs.hasDate;
+import static bti.pds.dinner.sales.infrastructure.persistence.repository.SaleEntitySpecs.hasStatus;
 
 @Repository
 public class JpaSaleRepository implements SaleRepository {
@@ -30,16 +34,9 @@ public class JpaSaleRepository implements SaleRepository {
     }
 
     @Override
-    public List<Sale> findAll() {
-        return jpaRepository.findAll()
-                .stream()
-                .map(SaleEntity::toDomain)
-                .toList();
-    }
-
-    @Override
-    public List<Sale> findAll(SaleStatus saleStatus) {
-        return jpaRepository.findByStatus(saleStatus)
+    public List<Sale> findAll(SaleStatus saleStatus, LocalDateTime date) {
+        var spec = hasStatus(saleStatus).and(hasDate(date));
+        return jpaRepository.findBy(spec, q -> q.all())
                 .stream()
                 .map(SaleEntity::toDomain)
                 .toList();

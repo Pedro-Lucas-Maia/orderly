@@ -14,6 +14,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -51,8 +52,9 @@ public class SaleController {
     }
 
     @GetMapping()
-    public ResponseEntity<List<SaleResponse>> listSales(@RequestParam(required = false) SaleStatus saleStatus) {
-        List<SaleResponse> responses = saleService.listSales(saleStatus)
+    public ResponseEntity<List<SaleResponse>> listSales(@RequestParam(required = false) SaleStatus saleStatus,
+                                                        @RequestParam(required = false) LocalDateTime date) {
+        List<SaleResponse> responses = saleService.listSales(saleStatus, date)
                 .stream()
                 .map(SaleResponse::from)
                 .toList();
