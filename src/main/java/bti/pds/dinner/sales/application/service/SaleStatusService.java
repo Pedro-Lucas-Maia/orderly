@@ -33,9 +33,8 @@ public class SaleStatusService {
     }
 
     @Transactional
-    public SaleOutput dispatchDelivery(String saleId, String userId) {
+    public SaleOutput dispatchDelivery(String saleId) {
         Sale sale = findSale(saleId);
-        checkAuthorization(sale.getUserId().uuid(), UUID.fromString(userId));
         sale.dispatch();
         return SaleOutput.from(saleRepository.save(sale));
     }

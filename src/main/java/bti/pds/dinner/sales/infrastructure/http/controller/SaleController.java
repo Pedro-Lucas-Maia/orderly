@@ -90,9 +90,8 @@ public class SaleController {
     }
 
     @PostMapping("/{id}/dispatch")
-    public ResponseEntity<SaleResponse> dispatchSale(@PathVariable String id, @NonNull JwtAuthenticationToken authentication) {
-        var  userId = getUserId(authentication);
-        return ResponseEntity.ok(SaleResponse.from(saleStatusService.dispatchDelivery(id, userId)));
+    public ResponseEntity<SaleResponse> dispatchSale(@PathVariable String id) {
+        return ResponseEntity.ok(SaleResponse.from(saleStatusService.dispatchDelivery(id)));
     }
 
     @PostMapping("/{id}/deliver")
