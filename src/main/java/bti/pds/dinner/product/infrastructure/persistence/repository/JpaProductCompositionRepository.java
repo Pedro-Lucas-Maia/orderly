@@ -5,7 +5,7 @@ import bti.pds.dinner.product.domain.ProductCompositionId;
 import bti.pds.dinner.product.domain.ProductCompositionRepository;
 import bti.pds.dinner.product.domain.ProductId;
 import bti.pds.dinner.product.infrastructure.persistence.entity.ProductCompositionEntity;
-import bti.pds.dinner.stock.domain.StockItemId;
+import bti.pds.dinner.product.domain.StockItemId;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Repository;
 

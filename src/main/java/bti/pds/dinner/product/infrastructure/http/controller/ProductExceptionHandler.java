@@ -23,6 +23,11 @@ public class ProductExceptionHandler {
         return error(HttpStatus.NOT_FOUND, e, request);
     }
 
+    @ExceptionHandler(bti.pds.dinner.stock.domain.exception.StockItemNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleStockItemNotFoundException(RuntimeException e, HttpServletRequest request) {
+        return error(HttpStatus.NOT_FOUND, e, request);
+    }
+
     @ExceptionHandler(FileUnreadableException.class)
     public ResponseEntity<ErrorResponse> handleUnreadableFile(FileUnreadableException e, HttpServletRequest request) {
         return error(HttpStatus.UNPROCESSABLE_CONTENT, e, request);

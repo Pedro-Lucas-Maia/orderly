@@ -3,7 +3,7 @@ package bti.pds.dinner.product.infrastructure.persistence.entity;
 import bti.pds.dinner.product.domain.ProductComposition;
 import bti.pds.dinner.product.domain.ProductCompositionId;
 import bti.pds.dinner.product.domain.ProductId;
-import bti.pds.dinner.stock.domain.StockItemId;
+import bti.pds.dinner.product.domain.StockItemId;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

@@ -1,7 +1,5 @@
 package bti.pds.dinner.product.domain;
 
-import bti.pds.dinner.stock.domain.StockItemId;
-
 import java.util.List;
 import java.util.Optional;
 

@@ -3,19 +3,9 @@ package bti.pds.dinner.product.application.service;
 import bti.pds.dinner.product.application.input.AddProductCompositionInput;
 import bti.pds.dinner.product.application.input.UpdateProductCompositionInput;
 import bti.pds.dinner.product.application.output.ProductCompositionOutput;
-import bti.pds.dinner.product.domain.Product;
-import bti.pds.dinner.product.domain.ProductComposition;
-import bti.pds.dinner.product.domain.ProductCompositionId;
-import bti.pds.dinner.product.domain.ProductCompositionRepository;
-import bti.pds.dinner.product.domain.ProductId;
-import bti.pds.dinner.product.domain.ProductRepository;
+import bti.pds.dinner.product.domain.*;
 import bti.pds.dinner.product.domain.exception.ProductCompositionNotFoundException;
 import bti.pds.dinner.product.domain.exception.ProductNotFoundException;
-import bti.pds.dinner.stock.domain.StockItem;
-import bti.pds.dinner.stock.domain.StockItemId;
-import bti.pds.dinner.stock.domain.StockItemRepository;
-import bti.pds.dinner.stock.domain.exception.StockItemNotFoundException;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -73,6 +63,13 @@ public class ProductCompositionService {
         productCompositionRepository.delete(composition);
     }
 
+    @Transactional
+    public void deleteByStockItemId(Long stockItemId) {
+        if (stockItemId != null) {
+            productCompositionRepository.deleteByStockItemId(new StockItemId(stockItemId));
+        }
+    }
+
     private Product findProductOrThrow(Long productId) {
         Product product = productRepository.findById(new ProductId(productId))
                 .orElseThrow(() -> new ProductNotFoundException("Product not found"));
@@ -82,13 +79,8 @@ public class ProductCompositionService {
         return product;
     }
 
-    private StockItem findStockItemOrThrow(Long stockItemId) {
-        StockItem item = stockItemRepository.findById(new StockItemId(stockItemId))
-                .orElseThrow(() -> new StockItemNotFoundException("Stock item not found"));
-        if (item.isDeleted()) {
-            throw new StockItemNotFoundException("Stock item not found");
-        }
-        return item;
+    private void findStockItemOrThrow(Long stockItemId) {
+        stockItemRepository.existsById(new StockItemId(stockItemId));
     }
 
     private ProductComposition findCompositionOrThrow(Long productId, Long compositionId) {
