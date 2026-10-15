@@ -30,7 +30,6 @@ public class CheckoutService {
         List<SaleItemInput> items = shoppingCartRepository.getItems(input.shoppingCartId());
         Address address = addressRepository.getAddress(input.addressId(), input.userId());
         CreateSaleInput sale = new CreateSaleInput(
-               input.storeId(),
                 input.observation(),
                 items,
                 input.userId(),

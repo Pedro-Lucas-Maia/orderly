@@ -6,7 +6,6 @@ import bti.pds.dinner.store.infrastructure.persistence.entity.StoreEntity;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
-import java.util.List;
 
 @Repository
 public class JpaStoreRepository implements StoreRepository {
@@ -24,15 +23,10 @@ public class JpaStoreRepository implements StoreRepository {
     }
 
     @Override
-    public Optional<Store> findById(Long id) {
-        return repository.findById(id)
+    public Optional<Store> getDefaultStore() {
+        return repository.findAll()
+                .stream()
+                .findFirst()
                 .map(StoreEntity::toDomain);
-    }
-
-    @Override
-    public List<Store> findAll() {
-        return repository.findAll().stream()
-                .map(StoreEntity::toDomain)
-                .toList();
     }
 }

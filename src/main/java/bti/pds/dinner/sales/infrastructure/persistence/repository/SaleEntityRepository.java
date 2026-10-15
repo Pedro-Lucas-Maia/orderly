@@ -9,6 +9,6 @@ import java.util.List;
 import java.util.UUID;
 
 public interface SaleEntityRepository extends JpaRepository<SaleEntity, UUID>, JpaSpecificationExecutor<SaleEntity> {
-    long countByStoreIdAndStatus(Long storeId, SaleStatus status);
+    long countByStatus(SaleStatus status);
     List<SaleEntity> findByUserId(UUID userId);
 }

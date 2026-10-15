@@ -37,10 +37,10 @@ public class SaleService {
     @Transactional
     public SaleOutput createSale(CreateSaleInput input) {
         validateInput(input);
-        ensureStoreIsAvailable(input.storeId());
+        ensureStoreIsAvailable();
         BigDecimal deliveryFee = calculateDeliveryFee(input.deliveryStreet(), input.deliveryNumber(), input.deliveryNeighborhood(), input.deliveryCity(), input.deliveryZipCode());
 
-        Sale sale = new Sale(input.storeId(), input.observation(), new UserId(input.userId()), deliveryFee, input.deliveryStreet(), input.deliveryNumber(), input.deliveryNeighborhood(), input.deliveryCity(), input.deliveryZipCode());
+        Sale sale = new Sale(input.observation(), new UserId(input.userId()), deliveryFee, input.deliveryStreet(), input.deliveryNumber(), input.deliveryNeighborhood(), input.deliveryCity(), input.deliveryZipCode());
         addItemsToSale(sale, input.items());
 
         Map<Long, Integer> totalConsumption = calculateTotalConsumption(input.items());
@@ -95,9 +95,9 @@ public class SaleService {
         }
     }
 
-    private void ensureStoreIsAvailable(Long storeId) {
-        if (!storeAvailability.isAvailableForOrders(storeId)) {
-            throw new StoreUnavailableException(storeId);
+    private void ensureStoreIsAvailable() {
+        if (!storeAvailability.isAvailableForOrders()) {
+            throw new StoreUnavailableException();
         }
     }
 

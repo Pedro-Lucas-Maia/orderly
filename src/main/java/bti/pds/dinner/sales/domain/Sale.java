@@ -9,14 +9,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @AllArgsConstructor
 @Getter
 @Builder
 public class Sale {
     private SaleId id;
-    private Long storeId;
     private LocalDateTime date;
     private SaleStatus status;
     private List<SaleItem> items;
@@ -29,9 +27,8 @@ public class Sale {
     private String deliveryNeighborhood;
     private String deliveryZipCode;
 
-    public Sale(Long storeId, String observation, UserId userId, BigDecimal deliveryFee, String deliveryStreet, String deliveryNumber, String deliveryCity, String deliveryNeighborhood, String deliveryZipCode) {
+    public Sale(String observation, UserId userId, BigDecimal deliveryFee, String deliveryStreet, String deliveryNumber, String deliveryCity, String deliveryNeighborhood, String deliveryZipCode) {
         this.id = new SaleId();
-        this.storeId = Objects.requireNonNull(storeId, "Store is required");
         this.date = LocalDateTime.now();
         this.status = SaleStatus.PENDENTE;
         this.items = new ArrayList<>();

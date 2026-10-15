@@ -36,24 +36,7 @@ class DailyInsightsServiceTest {
     void throwsWhenStoreDoesNotExist() {
         DailyInsightsService service = service(Optional.empty(), List.of());
 
-        assertThrows(StoreNotFoundException.class, () -> service.getForStore(99L, null, null, null));
-    }
-
-    @Test
-    void globalViewDoesNotRequireStoreId() {
-        DailyInsightsService service = service(Optional.empty(), List.of(
-                new DailySoldQuantity(LocalDate.of(2026, 3, 3), 1L, 10),
-                new DailySoldQuantity(LocalDate.of(2026, 3, 10), 1L, 10),
-                new DailySoldQuantity(LocalDate.of(2026, 3, 17), 1L, 10),
-                new DailySoldQuantity(LocalDate.of(2026, 3, 24), 1L, 10)
-        ));
-
-        DailyInsightsOutput output = service.getGlobal(LocalDate.of(2026, 3, 31), 3, 1);
-
-        assertNull(output.storeId());
-        assertEquals(DailyInsightsService.GLOBAL_STORE_NAME, output.storeName());
-        assertEquals(DailyInsightsService.DEMAND_SCOPE_ALL_STORES, output.assumptions().demandScope());
-        assertEquals(10, output.productDemand().getFirst().predictedQuantity());
+        assertThrows(StoreNotFoundException.class, () -> service.getDailyInsights(null, null, null));
     }
 
     @Test
@@ -68,7 +51,7 @@ class DailyInsightsServiceTest {
                 )
         );
 
-        DailyInsightsOutput output = service.getForStore(1L, null, null, null);
+        DailyInsightsOutput output = service.getDailyInsights(null, null, null);
 
         assertEquals(1L, output.storeId());
         assertEquals("Loja Principal", output.storeName());
@@ -83,8 +66,8 @@ class DailyInsightsServiceTest {
     @Test
     void wiresPurchaseCriticalAndExpiryFromStockSnapshot() {
         DailyInsightsService service = new DailyInsightsService(
-                id -> Optional.of(new StoreCatalog.StoreRef(1L, "Loja Principal")),
-                (storeId, from, to) -> List.of(
+                () -> Optional.of(new StoreCatalog.StoreRef(1L, "Loja Principal")),
+                (from, to) -> List.of(
                         new DailySoldQuantity(LocalDate.of(2026, 3, 3), 1L, 15),
                         new DailySoldQuantity(LocalDate.of(2026, 3, 10), 1L, 15),
                         new DailySoldQuantity(LocalDate.of(2026, 3, 17), 1L, 15),
@@ -111,7 +94,7 @@ class DailyInsightsServiceTest {
                 1
         );
 
-        DailyInsightsOutput output = service.getForStore(1L, LocalDate.of(2026, 3, 31), null, null);
+        DailyInsightsOutput output = service.getDailyInsights(LocalDate.of(2026, 3, 31), null, null);
 
         assertEquals(7, output.purchaseSuggestions().getFirst().quantityToBuy());
         assertTrue(output.purchaseSuggestions().getFirst().belowMinimum());
@@ -140,8 +123,8 @@ class DailyInsightsServiceTest {
             List<DailySoldQuantity> history
     ) {
         return new DailyInsightsService(
-                id -> store.filter(ref -> ref.id().equals(id)),
-                (storeId, from, to) -> history,
+                () -> store,
+                (from, to) -> history,
                 () -> List.of(new CatalogProduct(1L, "Classic Burger", new BigDecimal("28.90"))),
                 () -> List.of(new RecipeLine(1L, 10L, 1)),
                 new StockSnapshot() {

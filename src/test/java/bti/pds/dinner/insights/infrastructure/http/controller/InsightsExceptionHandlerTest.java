@@ -17,19 +17,19 @@ class InsightsExceptionHandlerTest {
     @Test
     void mapsMissingStoreToNotFound() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setRequestURI("/api/stores/999/insights");
+        request.setRequestURI("/api/insights");
 
-        var response = handler.handleStoreNotFound(new StoreNotFoundException(999L), request);
+        var response = handler.handleStoreNotFound(new StoreNotFoundException(), request);
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertEquals(404, response.getBody().getStatus());
-        assertEquals("Store not found: 999", response.getBody().getMessage());
+        assertEquals("Default Store not found", response.getBody().getMessage());
     }
 
     @Test
     void mapsInvalidDateToBadRequest() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setRequestURI("/api/stores/1/insights");
+        request.setRequestURI("/api/insights");
         MethodArgumentTypeMismatchException exception = new MethodArgumentTypeMismatchException(
                 "abc",
                 LocalDate.class,

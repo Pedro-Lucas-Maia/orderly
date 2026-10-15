@@ -11,7 +11,6 @@ import java.util.UUID;
 
 public record SaleOutput(
         String saleId,
-        Long storeId,
         LocalDateTime date,
         SaleStatus status,
         BigDecimal totalAmount,
@@ -28,7 +27,6 @@ public record SaleOutput(
     public static SaleOutput from(@NonNull Sale sale) {
         return new SaleOutput(
                 sale.getId().uuid().toString(),
-                sale.getStoreId(),
                 sale.getDate(),
                 sale.getStatus(),
                 sale.calculateTotal(sale.getDeliveryFee()),

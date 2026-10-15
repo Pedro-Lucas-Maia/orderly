@@ -6,7 +6,6 @@ public record CheckoutInput(
         UUID userId,
         String shoppingCartId,
         UUID addressId,
-        Long storeId,
         String observation
 ) {
 }

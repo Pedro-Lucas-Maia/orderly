@@ -15,8 +15,8 @@ public class StoreCatalogAdapter implements StoreCatalog {
     }
 
     @Override
-    public Optional<StoreRef> findById(Long storeId) {
-        return storeRepository.findById(storeId)
+    public Optional<StoreRef> getDefaultStore() {
+        return storeRepository.getDefaultStore()
                 .map(store -> new StoreRef(store.getId(), store.getName()));
     }
 }

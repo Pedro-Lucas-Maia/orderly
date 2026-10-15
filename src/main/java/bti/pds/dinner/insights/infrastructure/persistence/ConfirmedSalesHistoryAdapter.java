@@ -19,10 +19,8 @@ public class ConfirmedSalesHistoryAdapter implements ConfirmedSalesHistory {
     }
 
     @Override
-    public List<DailySoldQuantity> findDailyQuantities(Long storeId, LocalDateTime fromInclusive, LocalDateTime toExclusive) {
-        List<Object[]> rows = storeId == null
-                ? queryRepository.aggregateAllStores(fromInclusive, toExclusive)
-                : queryRepository.aggregateByStore(storeId, fromInclusive, toExclusive);
+    public List<DailySoldQuantity> findDailyQuantities(LocalDateTime fromInclusive, LocalDateTime toExclusive) {
+        List<Object[]> rows = queryRepository.aggregateSales(fromInclusive, toExclusive);
         List<DailySoldQuantity> result = new ArrayList<>();
         for (Object[] row : rows) {
             LocalDate date = toLocalDate(row[0]);

@@ -27,9 +27,6 @@ public class SaleEntity {
     @Id 
     private UUID id;
 
-    @Column(name = "store_id", nullable = false)
-    private Long storeId;
-
     @Column(name = "date", nullable = false)
     private LocalDateTime date;
 
@@ -67,9 +64,8 @@ public class SaleEntity {
     @Column(name = "delivery_zip_code")
     private String deliveryZipCode;
 
-    public SaleEntity(UUID id, Long storeId, LocalDateTime date, SaleStatus status, BigDecimal totalValue, String observation) {
+    public SaleEntity(UUID id, LocalDateTime date, SaleStatus status, BigDecimal totalValue, String observation) {
         this.id = id;
-        this.storeId = storeId;
         this.date = date;
         this.status = status;
         this.totalValue = totalValue;
@@ -84,7 +80,6 @@ public class SaleEntity {
     public static Sale toDomain(@NonNull SaleEntity entity) {
         return new Sale(
                 new SaleId(entity.getId()),
-                entity.getStoreId(),
                 entity.getDate(),
                 entity.getStatus(),
                 entity.items.stream()
@@ -104,7 +99,6 @@ public class SaleEntity {
     public static SaleEntity from(@NonNull Sale sale) {
         SaleEntity entity = new SaleEntity(
                 sale.getId().uuid(),
-                sale.getStoreId(),
                 sale.getDate(),
                 sale.getStatus(),
                 sale.calculateTotal(sale.getDeliveryFee()),

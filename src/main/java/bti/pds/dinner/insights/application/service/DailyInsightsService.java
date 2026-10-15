@@ -1,20 +1,7 @@
 package bti.pds.dinner.insights.application.service;
 
 import bti.pds.dinner.insights.application.output.DailyInsightsOutput;
-import bti.pds.dinner.insights.domain.CatalogProduct;
-import bti.pds.dinner.insights.domain.ConfirmedSalesHistory;
-import bti.pds.dinner.insights.domain.CriticalStockCalculator;
-import bti.pds.dinner.insights.domain.DailySoldQuantity;
-import bti.pds.dinner.insights.domain.DemandForecastCalculator;
-import bti.pds.dinner.insights.domain.ExpiryPromotionCalculator;
-import bti.pds.dinner.insights.domain.ProductCatalog;
-import bti.pds.dinner.insights.domain.PurchaseSuggestionCalculator;
-import bti.pds.dinner.insights.domain.RecipeCatalog;
-import bti.pds.dinner.insights.domain.RecipeLine;
-import bti.pds.dinner.insights.domain.StockItemSnapshot;
-import bti.pds.dinner.insights.domain.StockLotSnapshot;
-import bti.pds.dinner.insights.domain.StockSnapshot;
-import bti.pds.dinner.insights.domain.StoreCatalog;
+import bti.pds.dinner.insights.domain.*;
 import bti.pds.dinner.store.domain.exception.StoreNotFoundException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -73,15 +60,10 @@ public class DailyInsightsService {
     }
 
     @Transactional(readOnly = true)
-    public DailyInsightsOutput getForStore(Long storeId, LocalDate date, Integer expiryWindowDays, Integer horizonDays) {
-        StoreCatalog.StoreRef store = storeCatalog.findById(storeId)
-                .orElseThrow(() -> new StoreNotFoundException(storeId));
+    public DailyInsightsOutput getDailyInsights(LocalDate date, Integer expiryWindowDays, Integer horizonDays) {
+        StoreCatalog.StoreRef store = storeCatalog.getDefaultStore()
+                .orElseThrow(StoreNotFoundException::new);
         return build(store.id(), store.name(), DEMAND_SCOPE_STORE, storeNote(), date, expiryWindowDays, horizonDays);
-    }
-
-    @Transactional(readOnly = true)
-    public DailyInsightsOutput getGlobal(LocalDate date, Integer expiryWindowDays, Integer horizonDays) {
-        return build(null, GLOBAL_STORE_NAME, DEMAND_SCOPE_ALL_STORES, globalNote(), date, expiryWindowDays, horizonDays);
     }
 
     private DailyInsightsOutput build(
@@ -104,7 +86,7 @@ public class DailyInsightsService {
         LocalDateTime to = targetDate.atStartOfDay();
 
         List<CatalogProduct> products = productCatalog.findActiveProducts();
-        List<DailySoldQuantity> history = salesHistory.findDailyQuantities(storeId, from, to);
+        List<DailySoldQuantity> history = salesHistory.findDailyQuantities(from, to);
         List<DemandForecastCalculator.ProductDemand> demand = DemandForecastCalculator.forecast(
                 products, sampleDates, history, minSamplesHigh, minSamplesMedium
         );
@@ -165,10 +147,6 @@ public class DailyInsightsService {
     }
 
     private static String storeNote() {
-        return "Saldo de insumos é compartilhado entre lojas; demanda calculada só desta loja.";
-    }
-
-    private static String globalNote() {
-        return "Visão global provisória: demanda soma vendas CONFIRMADAS de todas as lojas; estoque continua compartilhado. Remover quando existir estoque/cardápio por loja.";
+        return "Demanda e estoque calculados para a loja.";
     }
 }

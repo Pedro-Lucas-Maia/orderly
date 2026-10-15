@@ -2,7 +2,7 @@ package bti.pds.dinner.sales.infrastructure.http.request;
 
 import bti.pds.dinner.sales.application.input.CheckoutInput;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import org.jspecify.annotations.NonNull;
 
 import java.util.UUID;
 
@@ -13,18 +13,13 @@ public record CheckoutRequest(
         @NotNull(message = "Address id is required")
         UUID addressId,
 
-        @NotNull(message = "Store id is required")
-        @Positive(message = "Store id must be positive")
-        Long storeId,
-
         String observation
 ) {
-    public static CheckoutInput toInput(CheckoutRequest request, String userId) {
+    public static CheckoutInput toInput(@NonNull CheckoutRequest request, String userId) {
         return new CheckoutInput(
                 UUID.fromString(userId),
                 request.shoppingCartId(),
                 request.addressId(),
-                request.storeId(),
                 request.observation()
         );
     }

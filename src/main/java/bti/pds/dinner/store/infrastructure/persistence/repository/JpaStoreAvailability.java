@@ -24,8 +24,8 @@ public class JpaStoreAvailability implements StoreAvailability {
     }
 
     @Override
-    public boolean isAvailableForOrders(Long storeId) {
-        return storeRepository.findById(storeId)
+    public boolean isAvailableForOrders() {
+        return storeRepository.getDefaultStore()
                 .map(this::refreshAndCheckAvailability)
                 .orElse(false);
     }
@@ -33,7 +33,7 @@ public class JpaStoreAvailability implements StoreAvailability {
     private boolean refreshAndCheckAvailability(Store store) {
         if (store.refreshAutomaticStatus(
                 LocalTime.now(),
-                ordersInProgressCounter.countOrdersInProgress(store.getId())
+                ordersInProgressCounter.countOrdersInProgress()
         )) {
             storeRepository.save(store);
         }

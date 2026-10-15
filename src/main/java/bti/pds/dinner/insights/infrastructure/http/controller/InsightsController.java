@@ -20,29 +20,14 @@ public class InsightsController {
         this.dailyInsightsService = dailyInsightsService;
     }
 
-    @GetMapping("/api/stores/{storeId}/insights")
-    public ResponseEntity<InsightsResponse> getByStoreId(
-            @PathVariable Long storeId,
+    @GetMapping({"/api/insights", "/api/store/insights"})
+    public ResponseEntity<InsightsResponse> getInsights(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(required = false) Integer expiryWindowDays,
             @RequestParam(required = false) Integer horizonDays
     ) {
         return ResponseEntity.ok(InsightsResponse.from(
-                dailyInsightsService.getForStore(storeId, date, expiryWindowDays, horizonDays)
-        ));
-    }
-
-    // TODO: listagem global provisória — remover quando o front passar a usar o storeId
-    // (mesmo padrão de GET /api/stock-items). A demanda aqui soma vendas de todas as lojas;
-    // o estoque continua compartilhado.
-    @GetMapping("/api/insights")
-    public ResponseEntity<InsightsResponse> getGlobal(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam(required = false) Integer expiryWindowDays,
-            @RequestParam(required = false) Integer horizonDays
-    ) {
-        return ResponseEntity.ok(InsightsResponse.from(
-                dailyInsightsService.getGlobal(date, expiryWindowDays, horizonDays)
+                dailyInsightsService.getDailyInsights(date, expiryWindowDays, horizonDays)
         ));
     }
 }

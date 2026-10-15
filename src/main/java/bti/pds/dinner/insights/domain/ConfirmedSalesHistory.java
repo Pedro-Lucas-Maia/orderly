@@ -4,5 +4,5 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ConfirmedSalesHistory {
-    List<DailySoldQuantity> findDailyQuantities(Long storeId, LocalDateTime fromInclusive, LocalDateTime toExclusive);
+    List<DailySoldQuantity> findDailyQuantities(LocalDateTime fromInclusive, LocalDateTime toExclusive);
 }
