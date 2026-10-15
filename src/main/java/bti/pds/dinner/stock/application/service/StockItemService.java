@@ -4,12 +4,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import bti.pds.dinner.product.domain.ProductCompositionRepository;
 import bti.pds.dinner.stock.application.input.CreateStockItemInput;
 import bti.pds.dinner.stock.application.input.RegisterMovementInput;
 import bti.pds.dinner.stock.application.input.UpdateStockItemInput;
 import bti.pds.dinner.stock.application.output.StockItemOutput;
 import bti.pds.dinner.stock.application.output.StockLotOutput;
+import bti.pds.dinner.stock.domain.ProductCompositionRepository;
 import bti.pds.dinner.stock.domain.LotAllocation;
 import bti.pds.dinner.stock.domain.LotLedger;
 import bti.pds.dinner.stock.domain.MovementType;
