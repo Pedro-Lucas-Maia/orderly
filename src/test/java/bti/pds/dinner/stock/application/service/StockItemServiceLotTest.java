@@ -1,9 +1,6 @@
 package bti.pds.dinner.stock.application.service;
 
-import bti.pds.dinner.product.domain.ProductComposition;
-import bti.pds.dinner.product.domain.ProductCompositionId;
-import bti.pds.dinner.product.domain.ProductCompositionRepository;
-import bti.pds.dinner.product.domain.ProductId;
+import bti.pds.dinner.stock.domain.ProductCompositionRepository;
 import bti.pds.dinner.stock.application.input.RegisterMovementInput;
 import bti.pds.dinner.stock.application.output.StockItemOutput;
 import bti.pds.dinner.stock.application.output.StockLotOutput;
@@ -305,29 +302,6 @@ class StockItemServiceLotTest {
     }
 
     private static final class FakeProductCompositionRepository implements ProductCompositionRepository {
-        @Override
-        public ProductComposition save(ProductComposition composition) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Optional<ProductComposition> findById(ProductCompositionId id) {
-            return Optional.empty();
-        }
-
-        @Override
-        public List<ProductComposition> findByProductId(ProductId productId) {
-            return List.of();
-        }
-
-        @Override
-        public void delete(ProductComposition composition) {
-        }
-
-        @Override
-        public void deleteByProductId(ProductId productId) {
-        }
-
         @Override
         public void deleteByStockItemId(StockItemId stockItemId) {
         }
