@@ -18,8 +18,6 @@ public class DailyInsightsService {
 
     public static final String STOCK_SCOPE_GLOBAL = "GLOBAL_SHARED";
     public static final String DEMAND_SCOPE_STORE = "STORE";
-    public static final String DEMAND_SCOPE_ALL_STORES = "ALL_STORES";
-    public static final String GLOBAL_STORE_NAME = "Todas as lojas";
 
     private final StoreCatalog storeCatalog;
     private final ConfirmedSalesHistory salesHistory;
@@ -63,13 +61,12 @@ public class DailyInsightsService {
     public DailyInsightsOutput getDailyInsights(LocalDate date, Integer expiryWindowDays, Integer horizonDays) {
         StoreCatalog.StoreRef store = storeCatalog.getDefaultStore()
                 .orElseThrow(StoreNotFoundException::new);
-        return build(store.id(), store.name(), DEMAND_SCOPE_STORE, storeNote(), date, expiryWindowDays, horizonDays);
+        return build(store.id(), store.name(), storeNote(), date, expiryWindowDays, horizonDays);
     }
 
     private DailyInsightsOutput build(
             Long storeId,
             String storeName,
-            String demandScope,
             String note,
             LocalDate date,
             Integer expiryWindowDays,
@@ -108,7 +105,7 @@ public class DailyInsightsService {
                 expiryWindow,
                 new DailyInsightsOutput.Assumptions(
                         STOCK_SCOPE_GLOBAL,
-                        demandScope,
+                        DailyInsightsService.DEMAND_SCOPE_STORE,
                         DemandForecastCalculator.METHOD,
                         forecastWeeks,
                         note

@@ -22,6 +22,7 @@ class InsightsExceptionHandlerTest {
         var response = handler.handleStoreNotFound(new StoreNotFoundException(), request);
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assert response.getBody() != null;
         assertEquals(404, response.getBody().getStatus());
         assertEquals("Default Store not found", response.getBody().getMessage());
     }
@@ -41,6 +42,7 @@ class InsightsExceptionHandlerTest {
         var response = handler.handleTypeMismatch(exception, request);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assert response.getBody() != null;
         assertEquals("Invalid date. Use ISO format YYYY-MM-DD.", response.getBody().getMessage());
     }
 }

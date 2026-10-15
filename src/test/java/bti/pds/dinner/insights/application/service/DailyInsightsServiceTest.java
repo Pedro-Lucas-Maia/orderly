@@ -1,16 +1,7 @@
 package bti.pds.dinner.insights.application.service;
 
 import bti.pds.dinner.insights.application.output.DailyInsightsOutput;
-import bti.pds.dinner.insights.domain.CatalogProduct;
-import bti.pds.dinner.insights.domain.ConfirmedSalesHistory;
-import bti.pds.dinner.insights.domain.DailySoldQuantity;
-import bti.pds.dinner.insights.domain.ProductCatalog;
-import bti.pds.dinner.insights.domain.RecipeCatalog;
-import bti.pds.dinner.insights.domain.RecipeLine;
-import bti.pds.dinner.insights.domain.StockItemSnapshot;
-import bti.pds.dinner.insights.domain.StockLotSnapshot;
-import bti.pds.dinner.insights.domain.StockSnapshot;
-import bti.pds.dinner.insights.domain.StoreCatalog;
+import bti.pds.dinner.insights.domain.*;
 import bti.pds.dinner.store.domain.exception.StoreNotFoundException;
 import org.junit.jupiter.api.Test;
 
@@ -22,11 +13,7 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class DailyInsightsServiceTest {
 
@@ -34,7 +21,7 @@ class DailyInsightsServiceTest {
 
     @Test
     void throwsWhenStoreDoesNotExist() {
-        DailyInsightsService service = service(Optional.empty(), List.of());
+        DailyInsightsService service = service(null, List.of());
 
         assertThrows(StoreNotFoundException.class, () -> service.getDailyInsights(null, null, null));
     }
@@ -42,7 +29,7 @@ class DailyInsightsServiceTest {
     @Test
     void storeViewUsesStoreScopeAndClockDateWhenDateOmitted() {
         DailyInsightsService service = service(
-                Optional.of(new StoreCatalog.StoreRef(1L, "Loja Principal")),
+                new StoreCatalog.StoreRef(1L, "Loja Principal"),
                 List.of(
                         new DailySoldQuantity(LocalDate.of(2026, 3, 3), 1L, 10),
                         new DailySoldQuantity(LocalDate.of(2026, 3, 10), 1L, 10),
@@ -67,7 +54,7 @@ class DailyInsightsServiceTest {
     void wiresPurchaseCriticalAndExpiryFromStockSnapshot() {
         DailyInsightsService service = new DailyInsightsService(
                 () -> Optional.of(new StoreCatalog.StoreRef(1L, "Loja Principal")),
-                (from, to) -> List.of(
+                (_, _) -> List.of(
                         new DailySoldQuantity(LocalDate.of(2026, 3, 3), 1L, 15),
                         new DailySoldQuantity(LocalDate.of(2026, 3, 10), 1L, 15),
                         new DailySoldQuantity(LocalDate.of(2026, 3, 17), 1L, 15),
@@ -119,12 +106,12 @@ class DailyInsightsServiceTest {
     }
 
     private static DailyInsightsService service(
-            Optional<StoreCatalog.StoreRef> store,
+            StoreCatalog.StoreRef store,
             List<DailySoldQuantity> history
     ) {
         return new DailyInsightsService(
-                () -> store,
-                (from, to) -> history,
+                () -> Optional.ofNullable(store),
+                (_, _) -> history,
                 () -> List.of(new CatalogProduct(1L, "Classic Burger", new BigDecimal("28.90"))),
                 () -> List.of(new RecipeLine(1L, 10L, 1)),
                 new StockSnapshot() {

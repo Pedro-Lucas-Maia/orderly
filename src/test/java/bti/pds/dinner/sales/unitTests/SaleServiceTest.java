@@ -133,13 +133,14 @@ class SaleServiceTest {
 
         @Override
         public void deductStock(Long stockItemId, int quantity, String reason) {
-            balances.compute(stockItemId, (id, balance) -> balance - quantity);
+
+            balances.compute(stockItemId, (_, balance) -> balance - quantity);
             deductions.add(stockItemId + ":" + quantity);
         }
 
         @Override
         public void addStock(Long stockItemId, int quantity, String reason) {
-            balances.compute(stockItemId, (id, balance) -> balance + quantity);
+            balances.compute(stockItemId, (_, balance) -> balance + quantity);
         }
     }
 

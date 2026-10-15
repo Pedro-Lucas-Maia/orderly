@@ -76,7 +76,7 @@ public class StoreService {
 
     private Store findStore() {
         return storeRepository.getDefaultStore()
-                .orElseThrow(() -> new StoreNotFoundException());
+                .orElseThrow(StoreNotFoundException::new);
     }
 
     private StoreOutput toOutput(@NonNull Store store) {
