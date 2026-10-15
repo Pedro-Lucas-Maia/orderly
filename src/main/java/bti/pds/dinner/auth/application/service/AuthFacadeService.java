@@ -3,6 +3,7 @@ package bti.pds.dinner.auth.application.service;
 
 import bti.pds.dinner.auth.application.input.LoginInput;
 import bti.pds.dinner.auth.application.input.RegisterInput;
+import bti.pds.dinner.auth.application.input.VerifyPasswordResetTokenInput;
 import bti.pds.dinner.auth.infrastructure.http.response.AuthResponse;
 import bti.pds.dinner.auth.infrastructure.http.response.UserResponse;
 import org.springframework.stereotype.Service;
@@ -50,7 +51,7 @@ public class AuthFacadeService {
         passwordResetService.initiatePasswordReset(input);
     }
 
-    public void validatePasswordResetToken(bti.pds.dinner.auth.application.input.VerifyPasswordResetTokenInput input) {
+    public void validatePasswordResetToken(VerifyPasswordResetTokenInput input) {
         passwordResetService.verifyToken(input);
     }
 

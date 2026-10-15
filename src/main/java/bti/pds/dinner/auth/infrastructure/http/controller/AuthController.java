@@ -1,5 +1,6 @@
 package bti.pds.dinner.auth.infrastructure.http.controller;
 
+import bti.pds.dinner.auth.application.input.VerifyPasswordResetTokenInput;
 import bti.pds.dinner.auth.application.service.AuthFacadeService;
 import bti.pds.dinner.auth.infrastructure.http.request.ForgotPasswordRequest;
 import bti.pds.dinner.auth.infrastructure.http.request.LoginRequest;
@@ -62,7 +63,7 @@ public class AuthController {
 
     @GetMapping("/password-reset/validate")
     public ResponseEntity<UserResponse> validatePasswordReset(@RequestParam("token") String token) {
-        authFacadeService.validatePasswordResetToken(new bti.pds.dinner.auth.application.input.VerifyPasswordResetTokenInput(token));
+        authFacadeService.validatePasswordResetToken(new VerifyPasswordResetTokenInput(token));
         return ResponseEntity.ok().build();
     }
 

@@ -24,7 +24,7 @@ public class JpaPassWordResetTokenRepository implements PasswordResetTokenReposi
 
     @Override
     public PasswordResetToken save(PasswordResetToken passwordResetToken) {
-        return PasswordResetTokenEntity.toDomain(PasswordResetTokenEntity.from(passwordResetToken));
+        return PasswordResetTokenEntity.toDomain(repository.save(PasswordResetTokenEntity.from(passwordResetToken)));
     }
 
     @Override
