@@ -26,7 +26,7 @@ public class AuthFacadeService {
 
     public AuthResponse login(LoginInput loginInput) {
         UserResponse user = UserResponse.from(loginService.login(loginInput));
-        return new AuthResponse(user.id(), user.name(), user.email(), user.role(), cookieService.generateTokenCookie(user.email(), user.id().toString()));
+        return new AuthResponse(user.id(), user.name(), user.email(), user.role(), cookieService.generateTokenCookie(user.email(), user.id(), user.role()));
     }
 
     public String getCleanCookie() {
@@ -39,12 +39,12 @@ public class AuthFacadeService {
 
     public AuthResponse getProfile(String email) {
         UserResponse user = UserResponse.from(profileService.getProfile(email));
-        return new AuthResponse(user.id(), user.name(), user.email(), user.role(), cookieService.generateTokenCookie(user.email(), user.id().toString()));
+        return new AuthResponse(user.id(), user.name(), user.email(), user.role(), cookieService.generateTokenCookie(user.email(), user.id(), user.role()));
     }
 
     public AuthResponse verifyToken(String token) {
         UserResponse userResponse = UserResponse.from(registerService.verifyToken(token));
-        return new AuthResponse(userResponse.id(), userResponse.name(), userResponse.email(), userResponse.role(), cookieService.generateTokenCookie(userResponse.email(), userResponse.id().toString()));
+        return new AuthResponse(userResponse.id(), userResponse.name(), userResponse.email(), userResponse.role(), cookieService.generateTokenCookie(userResponse.email(), userResponse.id(), userResponse.role()));
     }
 
     public void initiatePasswordReset(bti.pds.dinner.auth.application.input.InitiatePasswordResetInput input) {

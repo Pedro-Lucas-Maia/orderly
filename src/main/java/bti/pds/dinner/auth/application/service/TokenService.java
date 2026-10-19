@@ -8,6 +8,7 @@ import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.List;
 
 @Service
 public class TokenService {
@@ -20,14 +21,15 @@ public class TokenService {
         this.jwtEncoder = jwtEncoder;
     }
 
-    public String generateToken(String email, String userId) {
+    public String generateToken(String email, String userId, String role) {
         String token;
         try{
             var now = Instant.now();
             var claims = JwtClaimsSet.builder()
-                    .issuer("PedroMaia Auth Server")
+                    .issuer("Orderly API service")
                     .subject(email)
                     .claim("userId", userId)
+                    .claim("roles", List.of(role))
                     .issuedAt(now)
                     .expiresAt(now.plusSeconds(expirationTime))
                     .build();
