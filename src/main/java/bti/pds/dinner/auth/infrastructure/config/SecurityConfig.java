@@ -49,6 +49,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/products/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/sales").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/sales/*/confirm", "/api/sales/*/dispatch").hasRole("ADMIN")
+                        .requestMatchers("/api/reports/**").hasRole("ADMIN")
                         //Demais rotas
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
