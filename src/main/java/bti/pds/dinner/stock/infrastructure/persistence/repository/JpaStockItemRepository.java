@@ -1,16 +1,19 @@
 package bti.pds.dinner.stock.infrastructure.persistence.repository;
 
-import org.jspecify.annotations.NonNull;
-import org.springframework.stereotype.Repository;
-
-import bti.pds.dinner.stock.domain.StockId;
-import bti.pds.dinner.stock.domain.StockItem;
-import bti.pds.dinner.stock.domain.StockItemId;
-import bti.pds.dinner.stock.domain.StockItemRepository;
+import bti.pds.dinner.common.domain.PageQuery;
+import bti.pds.dinner.common.domain.PagedResult;
+import bti.pds.dinner.stock.domain.*;
 import bti.pds.dinner.stock.infrastructure.persistence.entity.StockItemEntity;
+import org.jspecify.annotations.NonNull;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+
+import static bti.pds.dinner.stock.infrastructure.persistence.repository.StockItemEntitySpecs.*;
 
 @Repository
 public class JpaStockItemRepository implements StockItemRepository {
@@ -38,14 +41,27 @@ public class JpaStockItemRepository implements StockItemRepository {
     }
 
     @Override
-    public List<StockItem> findByStockId(@NonNull StockId stockId, Boolean active) {
-        List<StockItemEntity> entities = active == null
-                ? repository.findByStockIdAndDeletedAtIsNull(stockId.value())
-                : repository.findByStockIdAndDeletedAtIsNullAndActive(stockId.value(), active);
-
-        return entities.stream()
+    public PagedResult<StockItem> findByStockId(@NonNull StockId stockId, StockItemFilter filter, PageQuery pageQuery) {
+        Pageable pageable = PageRequest.of(pageQuery.page(), pageQuery.size());
+        var spec = belongsToStock(stockId.value())
+                .and(isNotDeleted())
+                .and(hasActive(filter.active()))
+                .and(hasName(filter.name()))
+                .and(hasCategory(filter.category()));
+        Page<StockItemEntity> entityPage = repository.findBy(spec, q -> q.page(pageable));
+        List<StockItem> items = entityPage.getContent().stream()
                 .map(StockItemEntity::toDomain)
                 .toList();
+
+        return new PagedResult<>(
+                items,
+                entityPage.getNumber(),
+                entityPage.getSize(),
+                entityPage.getTotalElements(),
+                entityPage.getTotalPages(),
+                entityPage.isFirst(),
+                entityPage.isLast()
+        );
     }
 
     @Override

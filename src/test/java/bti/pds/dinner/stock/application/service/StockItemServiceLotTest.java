@@ -1,6 +1,9 @@
 package bti.pds.dinner.stock.application.service;
 
+import bti.pds.dinner.common.domain.PageQuery;
+import bti.pds.dinner.common.domain.PagedResult;
 import bti.pds.dinner.stock.domain.ProductCompositionRepository;
+import bti.pds.dinner.stock.domain.StockItemFilter;
 import bti.pds.dinner.stock.application.input.RegisterMovementInput;
 import bti.pds.dinner.stock.application.output.StockItemOutput;
 import bti.pds.dinner.stock.application.output.StockLotOutput;
@@ -214,8 +217,9 @@ class StockItemServiceLotTest {
         }
 
         @Override
-        public List<StockItem> findByStockId(StockId stockId, Boolean active) {
-            return List.copyOf(store.values());
+        public PagedResult<StockItem> findByStockId(StockId stockId, StockItemFilter filter, PageQuery pageQuery) {
+            List<StockItem> list = List.copyOf(store.values());
+            return new PagedResult<>(list, pageQuery.page(), pageQuery.size(), list.size(), 1, true, true);
         }
 
         @Override

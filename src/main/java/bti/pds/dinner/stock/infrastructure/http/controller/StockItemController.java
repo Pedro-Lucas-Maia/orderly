@@ -1,17 +1,8 @@
 package bti.pds.dinner.stock.infrastructure.http.controller;
 
-import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
+import bti.pds.dinner.common.domain.PagedResult;
+import bti.pds.dinner.common.http.PagedResponse;
+import bti.pds.dinner.stock.application.input.ListStockItemsInput;
 import bti.pds.dinner.stock.application.output.StockItemOutput;
 import bti.pds.dinner.stock.application.service.StockItemService;
 import bti.pds.dinner.stock.infrastructure.http.request.CreateStockItemRequest;
@@ -19,6 +10,10 @@ import bti.pds.dinner.stock.infrastructure.http.request.RegisterMovementRequest;
 import bti.pds.dinner.stock.infrastructure.http.request.UpdateStockItemRequest;
 import bti.pds.dinner.stock.infrastructure.http.response.StockItemResponse;
 import bti.pds.dinner.stock.infrastructure.http.response.StockLotResponse;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -40,13 +35,19 @@ public class StockItemController {
     }
 
     @GetMapping("/api/stocks/{stockId}/items")
-    public ResponseEntity<List<StockItemResponse>> listByStockId(
+    public ResponseEntity<PagedResponse<StockItemResponse>> listByStockId(
             @PathVariable Long stockId,
-            @RequestParam(required = false) Boolean active
+            @RequestParam(required = false) Boolean active,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String category,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
     ) {
-        List<StockItemResponse> response = stockItemService.listByStock(stockId, active).stream()
-                .map(StockItemResponse::from)
-                .toList();
+        var input = new ListStockItemsInput(active, name, category, page, size);
+
+        PagedResult<StockItemOutput> output = stockItemService.listByStock(stockId, input);
+        PagedResponse<StockItemResponse> response = PagedResponse.from(output, StockItemResponse::from);
+
         return ResponseEntity.ok(response);
     }
 

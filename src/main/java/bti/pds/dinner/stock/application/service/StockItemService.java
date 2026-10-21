@@ -1,5 +1,9 @@
 package bti.pds.dinner.stock.application.service;
 
+import bti.pds.dinner.common.domain.PageQuery;
+import bti.pds.dinner.common.domain.PagedResult;
+import bti.pds.dinner.stock.application.input.ListStockItemsInput;
+import bti.pds.dinner.stock.domain.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,20 +13,6 @@ import bti.pds.dinner.stock.application.input.RegisterMovementInput;
 import bti.pds.dinner.stock.application.input.UpdateStockItemInput;
 import bti.pds.dinner.stock.application.output.StockItemOutput;
 import bti.pds.dinner.stock.application.output.StockLotOutput;
-import bti.pds.dinner.stock.domain.ProductCompositionRepository;
-import bti.pds.dinner.stock.domain.LotAllocation;
-import bti.pds.dinner.stock.domain.LotLedger;
-import bti.pds.dinner.stock.domain.MovementType;
-import bti.pds.dinner.stock.domain.StockId;
-import bti.pds.dinner.stock.domain.StockItem;
-import bti.pds.dinner.stock.domain.StockItemId;
-import bti.pds.dinner.stock.domain.StockItemRepository;
-import bti.pds.dinner.stock.domain.StockLot;
-import bti.pds.dinner.stock.domain.StockLotId;
-import bti.pds.dinner.stock.domain.StockLotRepository;
-import bti.pds.dinner.stock.domain.StockMovement;
-import bti.pds.dinner.stock.domain.StockMovementRepository;
-import bti.pds.dinner.stock.domain.StockRepository;
 import bti.pds.dinner.stock.domain.exception.MissingLotExpiryException;
 import bti.pds.dinner.stock.domain.exception.StockItemNotFoundException;
 import bti.pds.dinner.stock.domain.exception.StockNotFoundException;
@@ -94,13 +84,16 @@ public class StockItemService {
         return toOutput(saved);
     }
 
-    public List<StockItemOutput> listByStock(Long stockId, Boolean active) {
+    public PagedResult<StockItemOutput> listByStock(Long stockId, ListStockItemsInput input) {
         stockRepository.findById(new StockId(stockId))
                 .orElseThrow(() -> new StockNotFoundException("Stock not found"));
 
-        return stockItemRepository.findByStockId(new StockId(stockId), active).stream()
-                .map(this::toOutput)
-                .toList();
+        var filter = new StockItemFilter(input.name(), input.active(), input.category());
+        var pageQuery = new PageQuery(input.page(), input.size());
+
+        PagedResult<StockItem> pagedItems = stockItemRepository.findByStockId(new StockId(stockId), filter,  pageQuery);
+
+        return pagedItems.map(this::toOutput);
     }
 
     // TODO: listagem global provisória — remover quando o front passar a usar o stockId

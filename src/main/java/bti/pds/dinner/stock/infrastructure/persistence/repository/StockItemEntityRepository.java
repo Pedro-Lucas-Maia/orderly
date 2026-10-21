@@ -1,19 +1,19 @@
 package bti.pds.dinner.stock.infrastructure.persistence.repository;
 
-import org.jspecify.annotations.NonNull;
+import bti.pds.dinner.stock.infrastructure.persistence.entity.StockItemEntity;
 import jakarta.persistence.LockModeType;
+import org.jspecify.annotations.NonNull;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
-import bti.pds.dinner.stock.infrastructure.persistence.entity.StockItemEntity;
-
 import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface StockItemEntityRepository extends CrudRepository<StockItemEntity, Long> {
+public interface StockItemEntityRepository extends CrudRepository<StockItemEntity, Long>, JpaSpecificationExecutor<StockItemEntity> {
     @NonNull List<StockItemEntity> findAll();
 
     List<StockItemEntity> findByStockId(Long stockId);

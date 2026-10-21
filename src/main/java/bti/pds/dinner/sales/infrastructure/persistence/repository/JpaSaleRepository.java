@@ -1,4 +1,3 @@
-// src/main/java/bti/pds/dinner/sales/infrastructure/persistence/repository/SaleRepositoryImpl.java
 package bti.pds.dinner.sales.infrastructure.persistence.repository;
 
 import bti.pds.dinner.sales.domain.*;

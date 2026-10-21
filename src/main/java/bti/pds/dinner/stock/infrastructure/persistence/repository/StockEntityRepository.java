@@ -1,14 +1,9 @@
 package bti.pds.dinner.stock.infrastructure.persistence.repository;
 
-import org.jspecify.annotations.NonNull;
-import org.springframework.data.repository.CrudRepository;
+import bti.pds.dinner.stock.infrastructure.persistence.entity.StockEntity;
+import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.stereotype.Repository;
 
-import bti.pds.dinner.stock.infrastructure.persistence.entity.StockEntity;
-
-import java.util.List;
-
 @Repository
-public interface StockEntityRepository extends CrudRepository<StockEntity, Long> {
-    @NonNull List<StockEntity> findAll();
+public interface StockEntityRepository extends ListCrudRepository<StockEntity, Long> {
 }
