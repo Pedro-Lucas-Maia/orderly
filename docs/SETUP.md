@@ -14,9 +14,34 @@ O sistema de autenticação utiliza a API do [Resend](https://resend.com/) para 
 Você precisará de uma chave de API válida para o serviço funcionar.
 
 1. Crie uma conta no [Resend](https://resend.com/) e gere uma **API Key**.
-2. No seu arquivo `application.properties` (ou `.env`, dependendo de como você injeta), defina a propriedade:
+2. Defina a variável de ambiente `RESEND_API_KEY` ou configure diretamente em `application.properties`:
    ```properties
    resend.api.key=re_sua_chave_gerada_aqui
+   ```
+   > **Nota:** Caso não seja informada, o valor padrão é `default_api_key`, mas os envios reais falharão.
+
+### Cloudinary (Armazenamento de Imagens)
+
+O módulo de produtos utiliza o [Cloudinary](https://cloudinary.com/) para upload, hospedagem e remoção das imagens do catálogo.
+
+> **Atenção:** As configurações do Cloudinary são **obrigatórias** para o startup da aplicação. Se não forem fornecidas, o Spring Boot não conseguirá inicializar o bean `CloudinaryConfig` e a aplicação falhará ao subir.
+
+1. Crie uma conta no [Cloudinary](https://cloudinary.com/).
+2. No seu Dashboard / Console (em *API Keys*), obtenha as seguintes credenciais:
+   - **Cloud Name**
+   - **API Key**
+   - **API Secret**
+3. Configure as variáveis de ambiente ou atualize seu `application.properties`:
+   ```properties
+   cloudinary.cloud-name=seu_cloud_name
+   cloudinary.api-key=sua_api_key
+   cloudinary.api-secret=seu_api_secret
+   ```
+   Ou exporte via terminal / configuração de execução da IDE:
+   ```bash
+   export CLOUDINARY_CLOUD_NAME=seu_cloud_name
+   export CLOUDINARY_API_KEY=sua_api_key
+   export CLOUDINARY_API_SECRET=seu_api_secret
    ```
 
 ### Chaves Criptográficas (JWT)
@@ -43,20 +68,43 @@ Pronto! As chaves estarão no local correto que o `JwtConfig` e o `application.p
 
 > **Importante:** A pasta `src/main/resources/env/` está no `.gitignore`. **Nunca** faça o commit de chaves de produção ou desenvolvimento reais no repositório.
 
+### Resumo das Variáveis de Ambiente
+
+| Variável | Descrição | Obrigatória? | Valor Padrão |
+| :--- | :--- | :---: | :--- |
+| `CLOUDINARY_CLOUD_NAME` | Nome da conta/cloud no Cloudinary | **Sim** | - |
+| `CLOUDINARY_API_KEY` | Chave de API do Cloudinary | **Sim** | - |
+| `CLOUDINARY_API_SECRET` | Segredo de API do Cloudinary | **Sim** | - |
+| `RESEND_API_KEY` | Chave de API do Resend | Não* | `default_api_key` (*necessária para envios reais) |
+| `DB_USERNAME` | Usuário do PostgreSQL | Não | `myuser` |
+| `DB_PASSWORD` | Senha do PostgreSQL | Não | `secret` |
+| `DB_HOST` | Host do PostgreSQL | Não | `localhost` |
+| `DB_PORT` | Porta do PostgreSQL | Não | `5432` |
+| `DB_NAME` | Nome do banco de dados | Não | `mydatabase` |
+| `JWT_EXPIRATION` | Tempo de expiração do JWT (em segundos) | Não | `300` |
+
 ---
 
-## 2. Banco de Dados
+## 2. Banco de Dados e Serviços (Docker Compose)
 
-O projeto está configurado com Spring Boot, JPA, Flyway (para migrações) e PostgreSQL.
-Certifique-se de ter um banco PostgreSQL rodando de acordo com as credenciais padrões do projeto (geralmente localhost porta 5432) ou inicialize-o via **Docker Compose**, caso disponível.
+O projeto está configurado com Spring Boot, JPA, Flyway (para migrações automáticas), PostgreSQL e Redis.
 
-Os testes de integração utilizam o **Testcontainers**, o que significa que durante a rotina de testes (`mvn test`), o banco de dados de teste será levantado automaticamente num contêiner Docker (você precisa ter o Docker rodando na sua máquina).
+### Via Docker Compose Integrado (Recomendado)
+O projeto conta com o `compose.yaml` e a dependência do Spring Boot Docker Compose habilitada (`spring.docker.compose.lifecycle-management=start_only`).
+Se você tiver o **Docker** rodando na máquina:
+- Ao executar a aplicação (seja via IDE ou Maven), o Spring Boot iniciará os contêineres de **PostgreSQL** e **Redis** automaticamente.
+- Caso prefira subir manualmente antes da aplicação:
+  ```bash
+  docker compose up -d
+  ```
+
+Os testes de integração utilizam o **Testcontainers**, levantando um contêiner descartável do banco durante o ciclo `mvn test`.
 
 ---
 
 ## 3. Rodando o Projeto
 
-Após gerar as chaves e configurar a API Key, você pode rodar o projeto de duas formas:
+Após gerar o par de chaves RSA e definir as credenciais do Cloudinary e Resend:
 
 ### Via IDE (IntelliJ, Eclipse, VS Code)
 Basta abrir a classe principal `DinnerApplication.java` e executá-la.
