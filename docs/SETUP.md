@@ -107,7 +107,7 @@ Os testes de integração utilizam o **Testcontainers**, levantando um contêine
 Após gerar o par de chaves RSA e definir as credenciais do Cloudinary e Resend:
 
 ### Via IDE (IntelliJ, Eclipse, VS Code)
-Basta abrir a classe principal `DinnerApplication.java` e executá-la.
+Basta abrir a classe principal `BurgerApplication.java` e executá-la.
 
 ### Via Maven (Terminal)
 Na raiz do projeto, execute:
