@@ -8,10 +8,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 @EnableAsync
 @EnableScheduling
-public class DinnerApplication {
+public class BurgerApplication {
 
-    public static void main(String[] args) {
-        SpringApplication.run(DinnerApplication.class, args);
+    static void main(String[] args) {
+        SpringApplication.run(BurgerApplication.class, args);
     }
 
 }
