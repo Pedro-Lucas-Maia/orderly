@@ -96,7 +96,6 @@ public class StockItemService {
         return pagedItems.map(this::toOutput);
     }
 
-    // TODO: listagem global provisória — remover quando o front passar a usar o stockId
     public List<StockItemOutput> listAll(Boolean active) {
         return stockItemRepository.findAll(active).stream()
                 .map(this::toOutput)

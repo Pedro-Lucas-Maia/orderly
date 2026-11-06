@@ -51,7 +51,7 @@ public class StockItemController {
         return ResponseEntity.ok(response);
     }
 
-    // TODO: listagem global provisória — remover quando o front passar a usar o stockId
+
     @GetMapping("/api/stock-items")
     public ResponseEntity<List<StockItemResponse>> listAll(@RequestParam(required = false) Boolean active) {
         List<StockItemResponse> response = stockItemService.listAll(active).stream()
