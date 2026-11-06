@@ -20,7 +20,6 @@
         <dependency>
             <groupId>bti.pds</groupId>
             <artifactId>orderly-framework</artifactId>
-            <version>${project.version}</version>
         </dependency>
     </dependencies>
 
