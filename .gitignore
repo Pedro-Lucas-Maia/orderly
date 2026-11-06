@@ -33,4 +33,4 @@ build/
 .vscode/
 
 ### Env variables ###
-/src/main/resources/env/
+/orderly-framework/src/main/resources/env/**
