@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Import;
     "cloudinary.api-key=dummy",
     "cloudinary.api-secret=dummy"
 })
-class DinnerApplicationTests {
+class BurgerApplicationTests {
 
     @Test
     void contextLoads() {
