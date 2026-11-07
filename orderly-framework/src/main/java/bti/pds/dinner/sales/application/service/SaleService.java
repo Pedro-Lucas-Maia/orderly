@@ -4,7 +4,10 @@ import bti.pds.dinner.sales.application.input.CreateSaleInput;
 import bti.pds.dinner.sales.application.input.SaleItemInput;
 import bti.pds.dinner.sales.application.output.SaleOutput;
 import bti.pds.dinner.sales.domain.*;
-import bti.pds.dinner.sales.domain.exception.*;
+import bti.pds.dinner.sales.domain.exception.InvalidSaleStateException;
+import bti.pds.dinner.sales.domain.exception.SaleException;
+import bti.pds.dinner.sales.domain.exception.SaleNotFoundException;
+import bti.pds.dinner.sales.domain.exception.StoreUnavailableException;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,23 +63,6 @@ public class SaleService {
         validateStockAvailability(totalConsumption);
         deductStock(totalConsumption, "Sale #" + sale.getId().uuid());
         return SaleOutput.from(saleRepository.save(sale));
-    }
-
-    //TODO: remove this method and implement it on the instance
-    public BigDecimal calculateDeliveryFee(String street, String number, String neighborhood, String city, String zipCode) {
-        if (city == null || !city.trim().equalsIgnoreCase("Natal")) {
-            throw new OutOfDeliveryAreaException("Unfortunately, we do not deliver to the city: " + city);
-        }
-
-        String normalizedNeighborhood = neighborhood != null ? neighborhood.trim().toLowerCase() : "";
-        
-        return switch (normalizedNeighborhood) {
-            case "ponta negra", "capim macio", "neópolis" -> new BigDecimal("5.00");
-            case "candelária", "lagoa nova", "nova descoberta", "tirol", "petrópolis" -> new BigDecimal("7.50");
-            case "alecrim", "quintas", "bairro das roças", "areia preta", "mãe luiza" -> new BigDecimal("10.00");
-            case "zona norte", "potengi", "pajuçara", "redinha", "igapó" -> new BigDecimal("15.00");
-            default -> new BigDecimal("10.00"); // Valor padrão para bairros não listados
-        };
     }
 
     @Transactional(readOnly = true)
