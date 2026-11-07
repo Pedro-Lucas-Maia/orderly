@@ -1,14 +1,18 @@
 package bti.pds.dinner.sales.domain;
 
 import bti.pds.dinner.sales.domain.exception.InvalidSaleStateException;
+import bti.pds.dinner.sales.domain.exception.SaleException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import org.jspecify.annotations.NonNull;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @AllArgsConstructor
 @Getter
@@ -21,43 +25,60 @@ public class Sale {
     private String observation;
     private UserId userId;
     private BigDecimal deliveryFee;
+    private BigDecimal totalAmount;
     private String deliveryStreet;
     private String deliveryNumber;
     private String deliveryCity;
     private String deliveryNeighborhood;
     private String deliveryZipCode;
 
-    public Sale(String observation, UserId userId, BigDecimal deliveryFee, String deliveryStreet, String deliveryNumber, String deliveryCity, String deliveryNeighborhood, String deliveryZipCode) {
-        this.id = new SaleId();
-        this.date = LocalDateTime.now();
-        this.status = SaleStatus.PENDENTE;
-        this.items = new ArrayList<>();
-        this.observation = observation;
-        this.userId = userId;
-        this.deliveryFee = deliveryFee;
-        this.deliveryStreet = deliveryStreet;
-        this.deliveryNumber = deliveryNumber;
-        this.deliveryCity = deliveryCity;
-        this.deliveryNeighborhood = deliveryNeighborhood;
-        this.deliveryZipCode = deliveryZipCode;
+    public static Sale createNew(
+            String observation,
+            UserId userId,
+            Address deliveryAddress,
+            List<SaleItem> items,
+            OrderPricingStrategy pricingStrategy
+    ) {
+        if (items == null || items.isEmpty()) {
+            throw new SaleException("A sale must contain at least one item");
+        }
+        Objects.requireNonNull(pricingStrategy,  "Pricing strategy is required to create a sale");
+        Sale sale = new SaleBuilder()
+                .id(new SaleId()).date(LocalDateTime.now()).status(SaleStatus.PENDENTE)
+                .items(new ArrayList<>(items)).observation(observation).userId(userId)
+                .deliveryFee(null).totalAmount(null).deliveryStreet(deliveryAddress.getStreet())
+                .deliveryNumber(deliveryAddress.getNumber()).deliveryCity(deliveryAddress.getCity())
+                .deliveryNeighborhood(deliveryAddress.getNeighborhood()).deliveryZipCode(deliveryAddress.getZipCode())
+                .build();
+
+        sale.recalculatePricing(deliveryAddress, pricingStrategy);
+
+        return sale;
     }
 
-    public void addItem(Long productId, int quantity, BigDecimal unitPrice) {
-        if (this.status != SaleStatus.PENDENTE) {
-            throw new InvalidSaleStateException("Items can only be added to pending sales.");
+    private void recalculatePricing(Address address, @NonNull OrderPricingStrategy pricingStrategy) {
+        this.deliveryFee = pricingStrategy.calculateDeliveryFee(address);
+        this.totalAmount = pricingStrategy.calculateOrderTotal(this, Collections.unmodifiableList(this.items), this.deliveryFee);
+
+        if (this.totalAmount == null || this.totalAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new InvalidSaleStateException("Calculated sale total must be a positive number");
         }
-        this.items.add(new SaleItem(productId, quantity, unitPrice));
     }
 
-    public BigDecimal calculateTotal(BigDecimal deliveryFee) {
-        var subTotal =  items.stream()
-                .map(SaleItem::getSubtotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        if (deliveryFee == null) {
-            return subTotal;
-        }
-        return deliveryFee.add(subTotal);
+    public static Sale reconstitute(
+            SaleId id, LocalDateTime date, SaleStatus status, List<SaleItem> items,
+            BigDecimal totalAmount, String observation, UserId userId, BigDecimal deliveryFee,
+            String deliveryStreet,  String deliveryNumber, String deliveryCity,
+            String deliveryNeighborhood, String deliveryZipCode
+    ) {
+        Objects.requireNonNull(totalAmount, "Persisted sale must have a total amount");
+        return new SaleBuilder()
+                .id(id).date(date).status(status).items(items).observation(observation)
+                .userId(userId).deliveryFee(deliveryFee).totalAmount(totalAmount)
+                .deliveryStreet(deliveryStreet).deliveryNumber(deliveryNumber).deliveryCity(deliveryCity)
+                .deliveryNeighborhood(deliveryNeighborhood).deliveryZipCode(deliveryZipCode).build();
     }
+
 
     public void confirm() {
         if (this.status != SaleStatus.PENDENTE) {

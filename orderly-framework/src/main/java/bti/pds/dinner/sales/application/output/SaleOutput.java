@@ -29,7 +29,7 @@ public record SaleOutput(
                 sale.getId().uuid().toString(),
                 sale.getDate(),
                 sale.getStatus(),
-                sale.calculateTotal(sale.getDeliveryFee()),
+                sale.getTotalAmount(),
                 sale.getObservation(),
                 sale.getItems().stream()
                         .map(SaleItemOutput::from)

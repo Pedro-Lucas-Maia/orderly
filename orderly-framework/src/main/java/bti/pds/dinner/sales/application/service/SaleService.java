@@ -5,15 +5,13 @@ import bti.pds.dinner.sales.application.input.SaleItemInput;
 import bti.pds.dinner.sales.application.output.SaleOutput;
 import bti.pds.dinner.sales.domain.*;
 import bti.pds.dinner.sales.domain.exception.*;
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class SaleService {
@@ -23,25 +21,40 @@ public class SaleService {
     private final StockRepository stockRepository;
     private final StoreAvailability storeAvailability;
     private final RecipeConsumptionService recipeConsumptionService;
+    private final OrderPricingStrategy orderPricingStrategy;
 
     public SaleService(SaleRepository saleRepository, ProductRepository productRepository,
             StockRepository stockRepository, StoreAvailability storeAvailability,
-            RecipeConsumptionService recipeConsumptionService) {
+            RecipeConsumptionService recipeConsumptionService, OrderPricingStrategy orderPricingStrategy) {
         this.saleRepository = saleRepository;
         this.productRepository = productRepository;
         this.stockRepository = stockRepository;
         this.storeAvailability = storeAvailability;
         this.recipeConsumptionService = recipeConsumptionService;
+        this.orderPricingStrategy = orderPricingStrategy;
     }
 
     @Transactional
     public SaleOutput createSale(CreateSaleInput input) {
         validateInput(input);
         ensureStoreIsAvailable();
-        BigDecimal deliveryFee = calculateDeliveryFee(input.deliveryStreet(), input.deliveryNumber(), input.deliveryNeighborhood(), input.deliveryCity(), input.deliveryZipCode());
 
-        Sale sale = new Sale(input.observation(), new UserId(input.userId()), deliveryFee, input.deliveryStreet(), input.deliveryNumber(), input.deliveryNeighborhood(), input.deliveryCity(), input.deliveryZipCode());
-        addItemsToSale(sale, input.items());
+        Address address = Address.builder()
+                .street(input.deliveryStreet())
+                .number(input.deliveryNumber())
+                .city(input.deliveryCity())
+                .neighborhood(input.deliveryNeighborhood())
+                .zipCode(input.deliveryZipCode())
+                .build();
+        List<SaleItem> items = buildSaleItems(input.items());
+
+        Sale sale = Sale.createNew(
+                input.observation(),
+                new UserId(input.userId()),
+                address,
+                items,
+                orderPricingStrategy
+        );
 
         Map<Long, Integer> totalConsumption = calculateTotalConsumption(input.items());
         validateStockAvailability(totalConsumption);
@@ -49,6 +62,7 @@ public class SaleService {
         return SaleOutput.from(saleRepository.save(sale));
     }
 
+    //TODO: remove this method and implement it on the instance
     public BigDecimal calculateDeliveryFee(String street, String number, String neighborhood, String city, String zipCode) {
         if (city == null || !city.trim().equalsIgnoreCase("Natal")) {
             throw new OutOfDeliveryAreaException("Unfortunately, we do not deliver to the city: " + city);
@@ -101,11 +115,13 @@ public class SaleService {
         }
     }
 
-    private void addItemsToSale(Sale sale, List<SaleItemInput> items) {
+    private @NonNull List<SaleItem> buildSaleItems(@NonNull List<SaleItemInput> items) {
+        List<SaleItem> saleItems = new ArrayList<>();
         for (SaleItemInput itemReq : items) {
             BigDecimal currentPrice = productRepository.getCurrentPrice(itemReq.productId());
-            sale.addItem(itemReq.productId(), itemReq.quantity(), currentPrice);
+            saleItems.add(new SaleItem(itemReq.productId(), itemReq.quantity(), currentPrice));
         }
+        return saleItems;
     }
 
     private Map<Long, Integer> calculateTotalConsumption(List<SaleItemInput> items) {

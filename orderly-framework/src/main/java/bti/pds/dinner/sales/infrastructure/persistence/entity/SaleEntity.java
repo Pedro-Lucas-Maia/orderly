@@ -78,30 +78,20 @@ public class SaleEntity {
     }
 
     public static Sale toDomain(@NonNull SaleEntity entity) {
-        return new Sale(
-                new SaleId(entity.getId()),
-                entity.getDate(),
-                entity.getStatus(),
-                entity.items.stream()
-                        .map(SaleItemEntity::toDomain)
-                        .toList(),
-                entity.getObservation(),
-                new UserId(entity.getUserId()),
-                entity.getDeliveryFee(),
-                entity.getDeliveryStreet(),
-                entity.getDeliveryNumber(),
-                entity.getDeliveryCity(),
-                entity.getDeliveryNeighborhood(),
-                entity.getDeliveryZipCode()
-        );
+        return Sale.reconstitute(new SaleId(entity.getId()), entity.getDate(), entity.getStatus(),
+                entity.getItems()
+                        .stream().map(SaleItemEntity::toDomain).toList(),
+                entity.getTotalValue(), entity.getObservation(), new UserId(entity.getUserId()), entity.getDeliveryFee(),
+                entity.getDeliveryStreet(), entity.getDeliveryNumber(), entity.getDeliveryCity(),
+                entity.getDeliveryNeighborhood(), entity.getDeliveryZipCode());
     }
     
-    public static SaleEntity from(@NonNull Sale sale) {
+    public static @NonNull SaleEntity from(@NonNull Sale sale) {
         SaleEntity entity = new SaleEntity(
                 sale.getId().uuid(),
                 sale.getDate(),
                 sale.getStatus(),
-                sale.calculateTotal(sale.getDeliveryFee()),
+                sale.getTotalAmount(),
                 sale.getObservation(),
                 new ArrayList<>(),
                 sale.getUserId().uuid(),

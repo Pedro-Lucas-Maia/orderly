@@ -21,21 +21,32 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class SaleServiceTest {
     @Test
-    void confirmsPendingSaleAfterAggregatingAndCheckingEveryIngredient() {
+    void confirmsPendingSaleAfterAggregatingAndCheckingEveryStockComponent() {
         FakeProductRepository products = new FakeProductRepository();
         products.recipes.put(1L, List.of(new RecipeItem(10L, 2), new RecipeItem(11L, 1)));
         products.recipes.put(2L, List.of(new RecipeItem(10L, 1)));
         FakeStockRepository stock = new FakeStockRepository(Map.of(10L, 5, 11L, 2));
         FakeSaleRepository sales = new FakeSaleRepository();
+        FakeOrderPricingStrategy pricingStrategy = new FakeOrderPricingStrategy(new BigDecimal("5.00"));
 
         RecipeConsumptionService recipeConsumptionService = new RecipeConsumptionService(products);
-        SaleService service = new SaleService(sales, products, stock, () -> true, recipeConsumptionService);
+        SaleService service = new SaleService(sales, products, stock, () -> true, recipeConsumptionService, pricingStrategy);
         SaleStatusService statusService = new SaleStatusService(stock, sales, recipeConsumptionService);
 
-        SaleOutput createdSale = service.createSale(new CreateSaleInput("Mesa 4", List.of(
-                new SaleItemInput(1L, 2), new SaleItemInput(2L, 1)), java.util.UUID.randomUUID(), "Rua A", "123", "Natal", "Ponta Negra", "59000-000"));
+        SaleOutput createdSale = service.createSale(new CreateSaleInput(
+                "Priority order",
+                List.of(new SaleItemInput(1L, 2), new SaleItemInput(2L, 1)),
+                java.util.UUID.randomUUID(),
+                "Street A",
+                "123",
+                "City Center",
+                "District A",
+                "00000-000"
+        ));
 
         assertEquals(SaleStatus.PENDENTE, createdSale.status());
+        assertEquals(new BigDecimal("5.00"), createdSale.deliveryFee());
+        assertEquals(new BigDecimal("35.00"), createdSale.totalAmount());
         assertEquals(0, stock.balances.get(10L));
         assertEquals(0, stock.balances.get(11L));
         assertEquals(2, stock.deductions.size());
@@ -52,17 +63,27 @@ class SaleServiceTest {
     }
 
     @Test
-    void doesNotDeductAnythingWhenOneIngredientIsInsufficient() {
+    void doesNotDeductAnythingWhenOneStockComponentIsInsufficient() {
         FakeProductRepository products = new FakeProductRepository();
         products.recipes.put(1L, List.of(new RecipeItem(10L, 1), new RecipeItem(11L, 2)));
         FakeStockRepository stock = new FakeStockRepository(Map.of(10L, 10, 11L, 1));
         FakeSaleRepository sales = new FakeSaleRepository();
+        FakeOrderPricingStrategy pricingStrategy = new FakeOrderPricingStrategy(new BigDecimal("5.00"));
 
         RecipeConsumptionService recipeConsumptionService = new RecipeConsumptionService(products);
-        SaleService service = new SaleService(sales, products, stock, () -> true, recipeConsumptionService);
+        SaleService service = new SaleService(sales, products, stock, () -> true, recipeConsumptionService, pricingStrategy);
 
         assertThrows(InvalidSaleStateException.class, () -> service
-                .createSale(new CreateSaleInput(null, List.of(new SaleItemInput(1L, 1)), java.util.UUID.randomUUID(), "Rua A", "123", "Natal", "Ponta Negra", "59000-000")));
+                .createSale(new CreateSaleInput(
+                        null,
+                        List.of(new SaleItemInput(1L, 1)),
+                        java.util.UUID.randomUUID(),
+                        "Street A",
+                        "123",
+                        "City Center",
+                        "District A",
+                        "00000-000"
+                )));
 
         assertEquals(10, stock.balances.get(10L));
         assertEquals(1, stock.balances.get(11L));
@@ -71,13 +92,27 @@ class SaleServiceTest {
     }
 
     @Test
-    void cancellationRestoresAllIngredientsOfConfirmedSale() {
+    void cancellationRestoresAllStockComponentsOfConfirmedSale() {
         FakeProductRepository products = new FakeProductRepository();
         products.recipes.put(1L, List.of(new RecipeItem(10L, 2)));
         FakeStockRepository stock = new FakeStockRepository(Map.of(10L, 0));
         FakeSaleRepository sales = new FakeSaleRepository();
-        Sale sale = new Sale("Cliente desistiu", new UserId(java.util.UUID.randomUUID()), new BigDecimal("5.00"), "Rua A", "123", "Natal", "Ponta Negra", "59000-000");
-        sale.addItem(1L, 3, new BigDecimal("10"));
+        FakeOrderPricingStrategy pricingStrategy = new FakeOrderPricingStrategy(new BigDecimal("5.00"));
+
+        Address address = Address.builder()
+                .street("Street A")
+                .number("123")
+                .city("City Center")
+                .neighborhood("District A")
+                .zipCode("00000-000")
+                .build();
+        Sale sale = Sale.createNew(
+                "Order cancelled by customer",
+                new UserId(java.util.UUID.randomUUID()),
+                address,
+                List.of(new SaleItem(1L, 3, new BigDecimal("10"))),
+                pricingStrategy
+        );
         sale.confirm();
         sales.saved = sale;
 
@@ -95,13 +130,44 @@ class SaleServiceTest {
         FakeProductRepository products = new FakeProductRepository();
         FakeStockRepository stock = new FakeStockRepository(Map.of());
         FakeSaleRepository sales = new FakeSaleRepository();
+        FakeOrderPricingStrategy pricingStrategy = new FakeOrderPricingStrategy(new BigDecimal("5.00"));
 
         RecipeConsumptionService recipeConsumptionService = new RecipeConsumptionService(products);
-        SaleService service = new SaleService(sales, products, stock, () -> false, recipeConsumptionService);
+        SaleService service = new SaleService(sales, products, stock, () -> false, recipeConsumptionService, pricingStrategy);
 
-        assertThrows(StoreUnavailableException.class, () -> service.createSale(new CreateSaleInput(null, List.of(new SaleItemInput(1L, 1)), java.util.UUID.randomUUID(), "Rua A", "123", "Natal", "Ponta Negra", "59000-000")));
+        assertThrows(StoreUnavailableException.class, () -> service.createSale(new CreateSaleInput(
+                null,
+                List.of(new SaleItemInput(1L, 1)),
+                java.util.UUID.randomUUID(),
+                "Street A",
+                "123",
+                "City Center",
+                "District A",
+                "00000-000"
+        )));
 
         assertNull(sales.saved);
+    }
+
+    private static class FakeOrderPricingStrategy implements OrderPricingStrategy {
+        private final BigDecimal flatDeliveryFee;
+
+        FakeOrderPricingStrategy(BigDecimal flatDeliveryFee) {
+            this.flatDeliveryFee = flatDeliveryFee;
+        }
+
+        @Override
+        public BigDecimal calculateOrderTotal(Sale sale, List<SaleItem> items, BigDecimal baseDeliveryFee) {
+            BigDecimal itemsTotal = items.stream()
+                    .map(SaleItem::getSubtotal)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            return baseDeliveryFee != null ? itemsTotal.add(baseDeliveryFee) : itemsTotal;
+        }
+
+        @Override
+        public BigDecimal calculateDeliveryFee(Address address) {
+            return flatDeliveryFee;
+        }
     }
 
     private static class FakeProductRepository implements ProductRepository {
