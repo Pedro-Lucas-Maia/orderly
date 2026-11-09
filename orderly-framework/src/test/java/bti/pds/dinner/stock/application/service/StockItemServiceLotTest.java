@@ -2,15 +2,17 @@ package bti.pds.dinner.stock.application.service;
 
 import bti.pds.dinner.common.domain.PageQuery;
 import bti.pds.dinner.common.domain.PagedResult;
-import bti.pds.dinner.stock.domain.ProductCompositionRepository;
-import bti.pds.dinner.stock.domain.StockItemFilter;
 import bti.pds.dinner.stock.application.input.RegisterMovementInput;
 import bti.pds.dinner.stock.application.output.StockItemOutput;
 import bti.pds.dinner.stock.application.output.StockLotOutput;
+import bti.pds.dinner.stock.domain.LotAllocation;
+import bti.pds.dinner.stock.domain.LotAllocationStrategy;
 import bti.pds.dinner.stock.domain.MovementType;
+import bti.pds.dinner.stock.domain.ProductCompositionRepository;
 import bti.pds.dinner.stock.domain.Stock;
 import bti.pds.dinner.stock.domain.StockId;
 import bti.pds.dinner.stock.domain.StockItem;
+import bti.pds.dinner.stock.domain.StockItemFilter;
 import bti.pds.dinner.stock.domain.StockItemId;
 import bti.pds.dinner.stock.domain.StockItemRepository;
 import bti.pds.dinner.stock.domain.StockLot;
@@ -48,6 +50,7 @@ class StockItemServiceLotTest {
     private FakeStockItemRepository items;
     private FakeStockLotRepository lots;
     private FakeStockMovementRepository movements;
+    private FakeLotAllocationStrategy allocationStrategy;
     private StockItemService service;
 
     @BeforeEach
@@ -55,12 +58,14 @@ class StockItemServiceLotTest {
         items = new FakeStockItemRepository();
         lots = new FakeStockLotRepository();
         movements = new FakeStockMovementRepository();
+        allocationStrategy = new FakeLotAllocationStrategy();
         service = new StockItemService(
                 new FakeStockRepository(),
                 items,
                 movements,
                 lots,
                 new FakeProductCompositionRepository(),
+                allocationStrategy,
                 CLOCK,
                 365,
                 7,
@@ -69,20 +74,20 @@ class StockItemServiceLotTest {
     }
 
     @Test
-    void deductsFromTheEarliestLotFirst() {
+    void deductsFromTheLotSelectedByStrategy() {
         items.save(item(1L, 15));
         lots.save(lot(1L, 1L, 10, LocalDate.of(2026, 4, 1)));
         lots.save(lot(2L, 1L, 5, LocalDate.of(2026, 5, 1)));
 
-        service.deductStock(1L, 8, "Sale #1");
+        service.deductStock(1L, 8, "Order #1");
 
         assertEquals(7, items.findById(new StockItemId(1L)).orElseThrow().getCurrentQuantity());
         List<StockLot> remaining = lots.findByStockItemId(new StockItemId(1L));
         assertEquals(2, remaining.size());
-        StockLot earliest = remaining.stream().filter(lot -> lot.getId().value() == 1L).findFirst().orElseThrow();
-        StockLot later = remaining.stream().filter(lot -> lot.getId().value() == 2L).findFirst().orElseThrow();
-        assertEquals(2, earliest.getQuantity());
-        assertEquals(5, later.getQuantity());
+        StockLot firstLot = remaining.stream().filter(lot -> lot.getId().value() == 1L).findFirst().orElseThrow();
+        StockLot secondLot = remaining.stream().filter(lot -> lot.getId().value() == 2L).findFirst().orElseThrow();
+        assertEquals(2, firstLot.getQuantity());
+        assertEquals(5, secondLot.getQuantity());
     }
 
     @Test
@@ -91,7 +96,7 @@ class StockItemServiceLotTest {
         lots.save(lot(1L, 1L, 10, LocalDate.of(2026, 4, 1)));
         lots.save(lot(2L, 1L, 50, LocalDate.of(2026, 5, 1)));
 
-        service.deductStock(1L, 30, "Sale #2");
+        service.deductStock(1L, 30, "Order #2");
 
         assertEquals(30, items.findById(new StockItemId(1L)).orElseThrow().getCurrentQuantity());
         List<StockLot> remaining = lots.findByStockItemId(new StockItemId(1L));
@@ -108,7 +113,7 @@ class StockItemServiceLotTest {
         items.save(item(1L, 4));
         lots.save(lot(1L, 1L, 4, LocalDate.of(2026, 4, 1)));
 
-        assertThrows(InsufficientStockException.class, () -> service.deductStock(1L, 5, "Sale #3"));
+        assertThrows(InsufficientStockException.class, () -> service.deductStock(1L, 5, "Order #3"));
 
         assertEquals(4, items.findById(new StockItemId(1L)).orElseThrow().getCurrentQuantity());
         assertEquals(4, lots.findByStockItemId(new StockItemId(1L)).getFirst().getQuantity());
@@ -121,7 +126,7 @@ class StockItemServiceLotTest {
 
         assertThrows(MissingLotExpiryException.class, () -> service.registerMovement(
                 1L,
-                new RegisterMovementInput(MovementType.ENTRADA, 10, "Compra", null)
+                new RegisterMovementInput(MovementType.ENTRADA, 10, "Restock", null)
         ));
     }
 
@@ -131,7 +136,7 @@ class StockItemServiceLotTest {
 
         StockItemOutput output = service.registerMovement(
                 1L,
-                new RegisterMovementInput(MovementType.ENTRADA, 10, "Compra", LocalDate.of(2026, 6, 1))
+                new RegisterMovementInput(MovementType.ENTRADA, 10, "Restock", LocalDate.of(2026, 6, 1))
         );
 
         assertEquals(10, output.currentQuantity());
@@ -145,7 +150,7 @@ class StockItemServiceLotTest {
     void addStockCreatesReversalLot() {
         items.save(item(1L, 0));
 
-        service.addStock(1L, 6, "Cancel sale #abc");
+        service.addStock(1L, 6, "Cancel order #abc");
 
         assertEquals(6, items.findById(new StockItemId(1L)).orElseThrow().getCurrentQuantity());
         assertEquals(LocalDate.of(2026, 4, 7), lots.findByStockItemId(new StockItemId(1L)).getFirst().getExpiresAt());
@@ -155,9 +160,9 @@ class StockItemServiceLotTest {
         return StockItem.builder()
                 .id(new StockItemId(id))
                 .stockId(new StockId(1L))
-                .name("Pão")
-                .category("Panificação")
-                .unit("UNIDADE")
+                .name("Component A")
+                .category("Raw Material")
+                .unit("UNIT")
                 .currentQuantity(quantity)
                 .minimumStock(0)
                 .unitCost(new BigDecimal("1.00"))
@@ -174,6 +179,26 @@ class StockItemServiceLotTest {
                 .expiresAt(expiresAt)
                 .receivedAt(LocalDate.of(2026, 3, 1).atStartOfDay())
                 .build();
+    }
+
+    private static final class FakeLotAllocationStrategy implements LotAllocationStrategy {
+        @Override
+        public List<LotAllocation> allocate(List<StockLot> availableLots, int requiredQuantity) {
+            int remaining = requiredQuantity;
+            List<LotAllocation> allocations = new ArrayList<>();
+            for (StockLot lot : availableLots) {
+                if (remaining == 0) {
+                    break;
+                }
+                int take = Math.min(lot.getQuantity(), remaining);
+                allocations.add(new LotAllocation(lot.getId(), take));
+                remaining -= take;
+            }
+            if (remaining > 0) {
+                throw new InsufficientStockException("Insufficient stock lots to allocate quantity: " + requiredQuantity);
+            }
+            return allocations;
+        }
     }
 
     private static final class FakeStockRepository implements StockRepository {
