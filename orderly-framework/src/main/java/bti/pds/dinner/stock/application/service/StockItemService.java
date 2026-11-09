@@ -2,20 +2,20 @@ package bti.pds.dinner.stock.application.service;
 
 import bti.pds.dinner.common.domain.PageQuery;
 import bti.pds.dinner.common.domain.PagedResult;
-import bti.pds.dinner.stock.application.input.ListStockItemsInput;
-import bti.pds.dinner.stock.domain.*;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import bti.pds.dinner.stock.application.input.CreateStockItemInput;
+import bti.pds.dinner.stock.application.input.ListStockItemsInput;
 import bti.pds.dinner.stock.application.input.RegisterMovementInput;
 import bti.pds.dinner.stock.application.input.UpdateStockItemInput;
 import bti.pds.dinner.stock.application.output.StockItemOutput;
 import bti.pds.dinner.stock.application.output.StockLotOutput;
+import bti.pds.dinner.stock.domain.*;
 import bti.pds.dinner.stock.domain.exception.MissingLotExpiryException;
 import bti.pds.dinner.stock.domain.exception.StockItemNotFoundException;
 import bti.pds.dinner.stock.domain.exception.StockNotFoundException;
+import org.jspecify.annotations.NonNull;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -34,6 +34,7 @@ public class StockItemService {
     private final StockMovementRepository stockMovementRepository;
     private final StockLotRepository stockLotRepository;
     private final ProductCompositionRepository productCompositionRepository;
+    private final LotAllocationStrategy lotAllocationStrategy;
     private final Clock clock;
     private final int adjustmentLotDays;
     private final int reversalLotDays;
@@ -45,6 +46,7 @@ public class StockItemService {
             StockMovementRepository stockMovementRepository,
             StockLotRepository stockLotRepository,
             ProductCompositionRepository productCompositionRepository,
+            LotAllocationStrategy lotAllocationStrategy,
             Clock clock,
             @Value("${app.stock.adjustment-lot-days:365}") int adjustmentLotDays,
             @Value("${app.stock.reversal-lot-days:7}") int reversalLotDays,
@@ -55,6 +57,7 @@ public class StockItemService {
         this.stockMovementRepository = stockMovementRepository;
         this.stockLotRepository = stockLotRepository;
         this.productCompositionRepository = productCompositionRepository;
+        this.lotAllocationStrategy = lotAllocationStrategy;
         this.clock = clock;
         this.adjustmentLotDays = adjustmentLotDays;
         this.reversalLotDays = reversalLotDays;
@@ -196,9 +199,9 @@ public class StockItemService {
         return toOutput(item);
     }
 
-    private void consumeLots(StockItem item, int quantity, MovementType movementType, String reason) {
+    private void consumeLots(@NonNull StockItem item, int quantity, MovementType movementType, String reason) {
         List<StockLot> lots = stockLotRepository.findByStockItemIdForUpdate(item.getId());
-        List<LotAllocation> allocations = LotLedger.allocateFefo(lots, quantity);
+        List<LotAllocation> allocations = lotAllocationStrategy.allocate(lots, quantity);
         Map<Long, StockLot> lotsById = lots.stream()
                 .collect(Collectors.toMap(lot -> lot.getId().value(), Function.identity()));
 
