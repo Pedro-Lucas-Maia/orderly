@@ -101,14 +101,17 @@ public class Sale {
         this.status = SaleStatus.ENTREGUE;
     }
 
-    public void cancel() {
+    public void cancel(SaleConsumptionStrategy strategy) {
         if (this.status == SaleStatus.CANCELADA) {
             throw new InvalidSaleStateException("This sale is already cancelled.");
         }
-        if (this.status == SaleStatus.EM_PREPARO || this.status == SaleStatus.PENDENTE) {
+        if (strategy == null) {
+            throw new InvalidSaleStateException("Strategy is required to cancel a sale.");
+        }
+        if (strategy.canBeCancelled(this.status)) {
             this.status = SaleStatus.CANCELADA;
             return;
         }
-        throw new InvalidSaleStateException("Only pending or preparing sales can be cancelled.");
+        throw new InvalidSaleStateException("A sale that is " + this.status + " can not be cancelled.");
     }
 }

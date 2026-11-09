@@ -17,11 +17,14 @@ public class SaleStatusService {
     private final StockRepository stockRepository;
     private final SaleRepository saleRepository;
     private final RecipeConsumptionService recipeConsumptionService;
+    private final SaleConsumptionStrategy saleConsumptionStrategy;
 
-    public SaleStatusService(StockRepository stockRepository, SaleRepository saleRepository, RecipeConsumptionService recipeConsumptionService) {
+    public SaleStatusService(StockRepository stockRepository, SaleRepository saleRepository,
+                             RecipeConsumptionService recipeConsumptionService, SaleConsumptionStrategy saleConsumptionStrategy) {
         this.stockRepository = stockRepository;
         this.saleRepository = saleRepository;
         this.recipeConsumptionService = recipeConsumptionService;
+        this.saleConsumptionStrategy = saleConsumptionStrategy;
     }
 
     @Transactional
@@ -50,11 +53,14 @@ public class SaleStatusService {
     @Transactional
     public void cancelSale(String saleIdStr) {
         Sale sale = findSale(saleIdStr);
+        SaleStatus statusBeforeCancel = sale.getStatus();
 
-        sale.cancel();
+        sale.cancel(saleConsumptionStrategy);
 
-        Map<Long, Integer> totalToReturn = calculateConsumptionFromSale(sale);
-        restoreStock(totalToReturn, "Cancel sale #" + saleIdStr);
+        if (saleConsumptionStrategy.shouldRestoreOnCancellation(statusBeforeCancel)) {
+            Map<Long, Integer> totalToReturn = calculateConsumptionFromSale(sale);
+            restoreStock(totalToReturn, "Cancel sale #" + saleIdStr);
+        }
 
         saleRepository.save(sale);
     }
