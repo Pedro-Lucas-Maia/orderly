@@ -28,10 +28,11 @@ class SaleServiceTest {
         FakeStockRepository stock = new FakeStockRepository(Map.of(10L, 5, 11L, 2));
         FakeSaleRepository sales = new FakeSaleRepository();
         FakeOrderPricingStrategy pricingStrategy = new FakeOrderPricingStrategy(new BigDecimal("5.00"));
+        FakeSaleConsumptionStrategy consumptionStrategy = new FakeSaleConsumptionStrategy(true, true, 0.0);
 
-        RecipeConsumptionService recipeConsumptionService = new RecipeConsumptionService(products);
+        RecipeConsumptionService recipeConsumptionService = new RecipeConsumptionService(products, consumptionStrategy);
         SaleService service = new SaleService(sales, products, stock, () -> true, recipeConsumptionService, pricingStrategy);
-        SaleStatusService statusService = new SaleStatusService(stock, sales, recipeConsumptionService);
+        SaleStatusService statusService = new SaleStatusService(stock, sales, recipeConsumptionService, consumptionStrategy);
 
         SaleOutput createdSale = service.createSale(new CreateSaleInput(
                 "Priority order",
@@ -69,8 +70,9 @@ class SaleServiceTest {
         FakeStockRepository stock = new FakeStockRepository(Map.of(10L, 10, 11L, 1));
         FakeSaleRepository sales = new FakeSaleRepository();
         FakeOrderPricingStrategy pricingStrategy = new FakeOrderPricingStrategy(new BigDecimal("5.00"));
+        FakeSaleConsumptionStrategy consumptionStrategy = new FakeSaleConsumptionStrategy(true, true, 0.0);
 
-        RecipeConsumptionService recipeConsumptionService = new RecipeConsumptionService(products);
+        RecipeConsumptionService recipeConsumptionService = new RecipeConsumptionService(products, consumptionStrategy);
         SaleService service = new SaleService(sales, products, stock, () -> true, recipeConsumptionService, pricingStrategy);
 
         assertThrows(InvalidSaleStateException.class, () -> service
@@ -92,12 +94,13 @@ class SaleServiceTest {
     }
 
     @Test
-    void cancellationRestoresAllStockComponentsOfConfirmedSale() {
+    void cancellationRestoresAllStockComponentsWhenPolicyAllowsRestore() {
         FakeProductRepository products = new FakeProductRepository();
         products.recipes.put(1L, List.of(new RecipeItem(10L, 2)));
         FakeStockRepository stock = new FakeStockRepository(Map.of(10L, 0));
         FakeSaleRepository sales = new FakeSaleRepository();
         FakeOrderPricingStrategy pricingStrategy = new FakeOrderPricingStrategy(new BigDecimal("5.00"));
+        FakeSaleConsumptionStrategy consumptionStrategy = new FakeSaleConsumptionStrategy(true, true, 0.0);
 
         Address address = Address.builder()
                 .street("Street A")
@@ -116,8 +119,8 @@ class SaleServiceTest {
         sale.confirm();
         sales.saved = sale;
 
-        RecipeConsumptionService recipeConsumptionService = new RecipeConsumptionService(products);
-        SaleStatusService statusService = new SaleStatusService(stock, sales, recipeConsumptionService);
+        RecipeConsumptionService recipeConsumptionService = new RecipeConsumptionService(products, consumptionStrategy);
+        SaleStatusService statusService = new SaleStatusService(stock, sales, recipeConsumptionService, consumptionStrategy);
 
         statusService.cancelSale(sale.getId().uuid().toString());
 
@@ -126,13 +129,83 @@ class SaleServiceTest {
     }
 
     @Test
+    void cancellationDoesNotRestoreStockWhenPolicyDisallowsRestore() {
+        FakeProductRepository products = new FakeProductRepository();
+        products.recipes.put(1L, List.of(new RecipeItem(10L, 2)));
+        FakeStockRepository stock = new FakeStockRepository(Map.of(10L, 0));
+        FakeSaleRepository sales = new FakeSaleRepository();
+        FakeOrderPricingStrategy pricingStrategy = new FakeOrderPricingStrategy(new BigDecimal("5.00"));
+        FakeSaleConsumptionStrategy consumptionStrategy = new FakeSaleConsumptionStrategy(true, false, 0.0);
+
+        Address address = Address.builder()
+                .street("Street A")
+                .number("123")
+                .city("City Center")
+                .neighborhood("District A")
+                .zipCode("00000-000")
+                .build();
+        Sale sale = Sale.createNew(
+                "Order cancelled during preparation without stock return",
+                new UserId(java.util.UUID.randomUUID()),
+                address,
+                List.of(new SaleItem(1L, 3, new BigDecimal("10"))),
+                pricingStrategy
+        );
+        sale.confirm();
+        sales.saved = sale;
+
+        RecipeConsumptionService recipeConsumptionService = new RecipeConsumptionService(products, consumptionStrategy);
+        SaleStatusService statusService = new SaleStatusService(stock, sales, recipeConsumptionService, consumptionStrategy);
+
+        statusService.cancelSale(sale.getId().uuid().toString());
+
+        assertEquals(0, stock.balances.get(10L));
+        assertEquals(SaleStatus.CANCELADA, sales.saved.getStatus());
+    }
+
+    @Test
+    void cancellationThrowsWhenPolicyDisallowsCancellationForCurrentStatus() {
+        FakeProductRepository products = new FakeProductRepository();
+        products.recipes.put(1L, List.of(new RecipeItem(10L, 2)));
+        FakeStockRepository stock = new FakeStockRepository(Map.of(10L, 0));
+        FakeSaleRepository sales = new FakeSaleRepository();
+        FakeOrderPricingStrategy pricingStrategy = new FakeOrderPricingStrategy(new BigDecimal("5.00"));
+        FakeSaleConsumptionStrategy consumptionStrategy = new FakeSaleConsumptionStrategy(false, false, 0.0);
+
+        Address address = Address.builder()
+                .street("Street A")
+                .number("123")
+                .city("City Center")
+                .neighborhood("District A")
+                .zipCode("00000-000")
+                .build();
+        Sale sale = Sale.createNew(
+                "Order cannot be cancelled in current status",
+                new UserId(java.util.UUID.randomUUID()),
+                address,
+                List.of(new SaleItem(1L, 3, new BigDecimal("10"))),
+                pricingStrategy
+        );
+        sale.confirm();
+        sales.saved = sale;
+
+        RecipeConsumptionService recipeConsumptionService = new RecipeConsumptionService(products, consumptionStrategy);
+        SaleStatusService statusService = new SaleStatusService(stock, sales, recipeConsumptionService, consumptionStrategy);
+
+        assertThrows(InvalidSaleStateException.class, () -> statusService.cancelSale(sale.getId().uuid().toString()));
+        assertEquals(0, stock.balances.get(10L));
+        assertEquals(SaleStatus.EM_PREPARO, sales.saved.getStatus());
+    }
+
+    @Test
     void doesNotCreateSaleWhenStoreIsNotOpen() {
         FakeProductRepository products = new FakeProductRepository();
         FakeStockRepository stock = new FakeStockRepository(Map.of());
         FakeSaleRepository sales = new FakeSaleRepository();
         FakeOrderPricingStrategy pricingStrategy = new FakeOrderPricingStrategy(new BigDecimal("5.00"));
+        FakeSaleConsumptionStrategy consumptionStrategy = new FakeSaleConsumptionStrategy(true, true, 0.0);
 
-        RecipeConsumptionService recipeConsumptionService = new RecipeConsumptionService(products);
+        RecipeConsumptionService recipeConsumptionService = new RecipeConsumptionService(products, consumptionStrategy);
         SaleService service = new SaleService(sales, products, stock, () -> false, recipeConsumptionService, pricingStrategy);
 
         assertThrows(StoreUnavailableException.class, () -> service.createSale(new CreateSaleInput(
@@ -147,6 +220,33 @@ class SaleServiceTest {
         )));
 
         assertNull(sales.saved);
+    }
+
+    private static class FakeSaleConsumptionStrategy implements SaleConsumptionStrategy {
+        private final boolean cancellable;
+        private final boolean restorable;
+        private final double lossFactor;
+
+        FakeSaleConsumptionStrategy(boolean cancellable, boolean restorable, double lossFactor) {
+            this.cancellable = cancellable;
+            this.restorable = restorable;
+            this.lossFactor = lossFactor;
+        }
+
+        @Override
+        public boolean canBeCancelled(SaleStatus saleStatus) {
+            return cancellable;
+        }
+
+        @Override
+        public boolean shouldRestoreOnCancellation(SaleStatus saleStatus) {
+            return restorable;
+        }
+
+        @Override
+        public double getProductionLossFactor() {
+            return lossFactor;
+        }
     }
 
     private static class FakeOrderPricingStrategy implements OrderPricingStrategy {
