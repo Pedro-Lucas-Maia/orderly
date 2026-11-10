@@ -12,6 +12,7 @@ import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalTime;
 
 @Service
@@ -20,15 +21,18 @@ public class StoreService {
     private final StoreRepository storeRepository;
     private final OrdersInProgressCounter ordersInProgressCounter;
     private final StoreCapacityPolicy storeCapacityPolicy;
+    private final Clock clock;
 
     public StoreService(
             StoreRepository storeRepository,
             OrdersInProgressCounter ordersInProgressCounter,
-            StoreCapacityPolicy storeCapacityPolicy
+            StoreCapacityPolicy storeCapacityPolicy,
+            Clock clock
     ) {
         this.storeRepository = storeRepository;
         this.ordersInProgressCounter = ordersInProgressCounter;
         this.storeCapacityPolicy = storeCapacityPolicy;
+        this.clock = clock;
     }
 
     @Transactional(readOnly = true)
@@ -45,7 +49,7 @@ public class StoreService {
                 input.maxOrdersInProgress(),
                 input.automaticPause()
         );
-        refreshAutomaticStatus(store, LocalTime.now());
+        refreshAutomaticStatus(store, currentTime());
         return toOutput(storeRepository.save(store));
     }
 
@@ -60,7 +64,7 @@ public class StoreService {
     public StoreOutput clearManualStatus() {
         Store store = findStore();
         store.clearManualStatus();
-        refreshAutomaticStatus(store, LocalTime.now());
+        refreshAutomaticStatus(store, currentTime());
         return toOutput(storeRepository.save(store));
     }
 
@@ -81,6 +85,10 @@ public class StoreService {
                 ordersInProgressCounter.countOrdersInProgress(),
                 storeCapacityPolicy
         );
+    }
+
+    private LocalTime currentTime() {
+        return LocalTime.now(clock);
     }
 
     private Store findStore() {
