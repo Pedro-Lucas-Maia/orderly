@@ -193,14 +193,14 @@ Extrair as regras de negócio engessadas da Fase 1 para interfaces polimórficas
 > 2. No código atual, tanto `StoreService` quanto `JpaStoreAvailability` chamam `store.refreshAutomaticStatus(currentTime, ordersInProgress)`, que internamente decide se a loja continua `ABERTA` ou vai para `PAUSADA`.
 > 3. Portanto, `StoreCapacityPolicy` deve viver 100% dentro de `bti.pds.dinner.store.domain`, sem importar nada de `sales`, sendo passada para `store.refreshAutomaticStatus(currentTime, ordersInProgress, storeCapacityPolicy)`!
 
-- [ ] Criar a interface de domínio `StoreCapacityPolicy` em `bti.pds.dinner.store.domain`:
+- [x] Criar a interface de domínio `StoreCapacityPolicy` em `bti.pds.dinner.store.domain`:
   ```java
   public interface StoreCapacityPolicy {
       boolean canAcceptOrder(Store store, int currentOrdersInProgress);
   }
   ```
-- [ ] Refatorar `Store.refreshAutomaticStatus` para receber `StoreCapacityPolicy` por parâmetro (mesmo padrão usado em `Sale.cancel` e `Sale.createNew`), pausando a loja (`StoreStatus.PAUSADA`) quando `!capacityPolicy.canAcceptOrder(this, ordersInProgress)`.
-- [ ] Injetar `StoreCapacityPolicy` em `StoreService` e `JpaStoreAvailability` para repassá-la ao método `store.refreshAutomaticStatus(...)`.
+- [x] Refatorar `Store.refreshAutomaticStatus` para receber `StoreCapacityPolicy` por parâmetro (mesmo padrão usado em `Sale.cancel` e `Sale.createNew`), pausando a loja (`StoreStatus.PAUSADA`) quando `!capacityPolicy.canAcceptOrder(this, ordersInProgress)`.
+- [x] Injetar `StoreCapacityPolicy` em `StoreService` e `JpaStoreAvailability` para repassá-la ao método `store.refreshAutomaticStatus(...)`.
 
 ---
 
@@ -220,7 +220,7 @@ Adaptar o sistema atual da Fase 1 para se comportar como a primeira aplicação 
   - [x] `BurgerPricingStrategy` (`sales.domain`): preço de cardápio + tabela de entrega por bairros locais de Natal.
   - [ ] `BurgerDemandForecastStrategy` (`insights.domain`): algoritmo `WEEKDAY_AVERAGE` (média das últimas 8 semanas do mesmo dia da semana).
   - [ ] `BurgerPromotionActionStrategy` (`insights.domain`): sugere promoções no cardápio para ingredientes vencendo em até 3 dias.
-  - [ ] `BurgerCapacityPolicy` (`store.domain`): pausa a loja se `automaticPause` estiver ativo e `currentOrdersInProgress >= maxOrdersInProgress`.
+  - [x] `BurgerCapacityPolicy` (`store.domain`): pausa a loja se `automaticPause` estiver ativo e `currentOrdersInProgress >= maxOrdersInProgress`.
 - [ ] **Passo 4.3 — Validar com Seed da Hamburgueria:**
   - Rodar aplicação na porta `8080` e aplicar o seed de demonstração (`scripts/seed-insights-demo.sql`).
   - Executar testes ponta a ponta: fluxo de venda $\rightarrow$ dedução de lotes FEFO $\rightarrow$ painel de insights diário.
