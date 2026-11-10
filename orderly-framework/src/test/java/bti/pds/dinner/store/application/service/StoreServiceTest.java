@@ -2,6 +2,7 @@ package bti.pds.dinner.store.application.service;
 
 import bti.pds.dinner.store.application.input.UpdateStoreStatusInput;
 import bti.pds.dinner.store.domain.Store;
+import bti.pds.dinner.store.domain.StoreCapacityPolicy;
 import bti.pds.dinner.store.domain.StoreRepository;
 import bti.pds.dinner.store.domain.StoreStatus;
 import org.junit.jupiter.api.Test;
@@ -13,11 +14,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class StoreServiceTest {
 
+    private final StoreCapacityPolicy capacityPolicy = new FakeStoreCapacityPolicy();
+
     @Test
     void pausesStoreWhenPendingOrdersReachItsLimit() {
         Store store = store();
         FakeStoreRepository stores = new FakeStoreRepository(store);
-        StoreService service = new StoreService(stores, () -> 3);
+        StoreService service = new StoreService(stores, () -> 3, capacityPolicy);
 
         service.refreshAutomaticStatuses(LocalTime.NOON);
 
@@ -27,9 +30,9 @@ class StoreServiceTest {
     @Test
     void reopensStoreWhenPendingOrdersDropBelowItsLimit() {
         Store store = store();
-        store.refreshAutomaticStatus(LocalTime.NOON, 3);
+        store.refreshAutomaticStatus(LocalTime.NOON, 3, capacityPolicy);
         FakeStoreRepository stores = new FakeStoreRepository(store);
-        StoreService service = new StoreService(stores, () -> 2);
+        StoreService service = new StoreService(stores, () -> 2, capacityPolicy);
 
         service.refreshAutomaticStatuses(LocalTime.NOON);
 
@@ -40,7 +43,7 @@ class StoreServiceTest {
     void updatesManualStatusAndClearsIt() {
         Store store = store();
         FakeStoreRepository stores = new FakeStoreRepository(store);
-        StoreService service = new StoreService(stores, () -> 0);
+        StoreService service = new StoreService(stores, () -> 0, capacityPolicy);
 
         service.updateStatusManually(new UpdateStoreStatusInput(StoreStatus.FECHADA));
         assertEquals(StoreStatus.FECHADA, store.getStatus());
@@ -53,8 +56,8 @@ class StoreServiceTest {
         return new Store(
                 1L,
                 "Dinner",
-                LocalTime.of(8, 0),
-                LocalTime.of(20, 0),
+                LocalTime.of(0, 0),
+                LocalTime.of(0, 0),
                 3,
                 true,
                 StoreStatus.FECHADA,
@@ -82,6 +85,13 @@ class StoreServiceTest {
         @Override
         public Optional<Store> getDefaultStore() {
             return Optional.ofNullable(store);
+        }
+    }
+
+    private static class FakeStoreCapacityPolicy implements StoreCapacityPolicy {
+        @Override
+        public boolean canAcceptOrder(Store store, int currentOrdersInProgress) {
+            return !store.isAutomaticPause() || currentOrdersInProgress < store.getMaxOrdersInProgress();
         }
     }
 }

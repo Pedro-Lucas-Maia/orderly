@@ -5,6 +5,7 @@ import bti.pds.dinner.store.application.input.UpdateStoreStatusInput;
 import bti.pds.dinner.store.application.output.StoreOutput;
 import bti.pds.dinner.store.domain.OrdersInProgressCounter;
 import bti.pds.dinner.store.domain.Store;
+import bti.pds.dinner.store.domain.StoreCapacityPolicy;
 import bti.pds.dinner.store.domain.StoreRepository;
 import bti.pds.dinner.store.domain.exception.StoreNotFoundException;
 import org.jspecify.annotations.NonNull;
@@ -18,13 +19,16 @@ public class StoreService {
 
     private final StoreRepository storeRepository;
     private final OrdersInProgressCounter ordersInProgressCounter;
+    private final StoreCapacityPolicy storeCapacityPolicy;
 
     public StoreService(
             StoreRepository storeRepository,
-            OrdersInProgressCounter ordersInProgressCounter
+            OrdersInProgressCounter ordersInProgressCounter,
+            StoreCapacityPolicy storeCapacityPolicy
     ) {
         this.storeRepository = storeRepository;
         this.ordersInProgressCounter = ordersInProgressCounter;
+        this.storeCapacityPolicy = storeCapacityPolicy;
     }
 
     @Transactional(readOnly = true)
@@ -63,14 +67,19 @@ public class StoreService {
     @Transactional
     public void refreshAutomaticStatuses(LocalTime currentTime) {
         Store store = findStore();
-        store.refreshAutomaticStatus(currentTime, ordersInProgressCounter.countOrdersInProgress());
+        store.refreshAutomaticStatus(
+                currentTime,
+                ordersInProgressCounter.countOrdersInProgress(),
+                storeCapacityPolicy
+        );
         storeRepository.save(store);
     }
 
     private void refreshAutomaticStatus(Store store, LocalTime currentTime) {
         store.refreshAutomaticStatus(
                 currentTime,
-                ordersInProgressCounter.countOrdersInProgress()
+                ordersInProgressCounter.countOrdersInProgress(),
+                storeCapacityPolicy
         );
     }
 

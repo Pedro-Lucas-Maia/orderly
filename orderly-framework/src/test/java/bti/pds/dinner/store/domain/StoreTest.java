@@ -10,11 +10,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class StoreTest {
 
+    private final StoreCapacityPolicy capacityPolicy = (store, currentOrders) ->
+            !store.isAutomaticPause() || currentOrders < store.getMaxOrdersInProgress();
+
     @Test
     void pausesAutomatically_whenDemandReachesConfiguredLimit() {
         Store store = store(true);
 
-        assertTrue(store.refreshAutomaticStatus(LocalTime.NOON, 3));
+        assertTrue(store.refreshAutomaticStatus(LocalTime.NOON, 3, capacityPolicy));
 
         assertEquals(StoreStatus.PAUSADA, store.getStatus());
     }
@@ -22,9 +25,9 @@ class StoreTest {
     @Test
     void reopensAutomatically_whenDemandDropsBelowConfiguredLimit() {
         Store store = store(true);
-        store.refreshAutomaticStatus(LocalTime.NOON, 3);
+        store.refreshAutomaticStatus(LocalTime.NOON, 3, capacityPolicy);
 
-        assertTrue(store.refreshAutomaticStatus(LocalTime.NOON, 2));
+        assertTrue(store.refreshAutomaticStatus(LocalTime.NOON, 2, capacityPolicy));
 
         assertEquals(StoreStatus.ABERTA, store.getStatus());
     }
@@ -33,7 +36,7 @@ class StoreTest {
     void doesNotPauseForDemand_whenAutomaticPauseIsDisabled() {
         Store store = store(false);
 
-        store.refreshAutomaticStatus(LocalTime.NOON, 3);
+        store.refreshAutomaticStatus(LocalTime.NOON, 3, capacityPolicy);
 
         assertEquals(StoreStatus.ABERTA, store.getStatus());
     }
@@ -43,7 +46,7 @@ class StoreTest {
         Store store = store(true);
         store.setManualStatus(StoreStatus.ABERTA);
 
-        assertFalse(store.refreshAutomaticStatus(LocalTime.NOON, 3));
+        assertFalse(store.refreshAutomaticStatus(LocalTime.NOON, 3, capacityPolicy));
 
         assertEquals(StoreStatus.ABERTA, store.getStatus());
     }
@@ -52,7 +55,7 @@ class StoreTest {
     void closingTimeHasPriorityOverDemandRule() {
         Store store = store(true);
 
-        store.refreshAutomaticStatus(LocalTime.of(22, 0), 3);
+        store.refreshAutomaticStatus(LocalTime.of(22, 0), 3, capacityPolicy);
 
         assertEquals(StoreStatus.FECHADA, store.getStatus());
     }

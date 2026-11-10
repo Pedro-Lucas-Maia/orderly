@@ -93,8 +93,9 @@ public class Store {
         this.manualStatus = null;
     }
 
-    public boolean refreshAutomaticStatus(LocalTime currentTime, int ordersInProgress) {
+    public boolean refreshAutomaticStatus(LocalTime currentTime, int ordersInProgress, StoreCapacityPolicy capacityPolicy) {
         Objects.requireNonNull(currentTime, "Current time is required");
+        Objects.requireNonNull(capacityPolicy, "Capacity policy is required");
         if (ordersInProgress < 0) {
             throw new IllegalArgumentException("Orders in progress cannot be negative");
         }
@@ -102,7 +103,7 @@ public class Store {
             return false;
         }
 
-        StoreStatus calculatedStatus = calculateAutomaticStatus(currentTime, ordersInProgress);
+        StoreStatus calculatedStatus = calculateAutomaticStatus(currentTime, ordersInProgress, capacityPolicy);
 
         if (status == calculatedStatus) {
             return false;
@@ -111,15 +112,15 @@ public class Store {
         return true;
     }
 
-    public boolean refreshAutomaticStatus(LocalTime currentTime) {
-        return refreshAutomaticStatus(currentTime, 0);
+    public boolean refreshAutomaticStatus(LocalTime currentTime, StoreCapacityPolicy capacityPolicy) {
+        return refreshAutomaticStatus(currentTime, 0, capacityPolicy);
     }
 
-    private StoreStatus calculateAutomaticStatus(LocalTime currentTime, int ordersInProgress) {
+    private StoreStatus calculateAutomaticStatus(LocalTime currentTime, int ordersInProgress, StoreCapacityPolicy capacityPolicy) {
         if (!isOpenAt(currentTime)) {
             return StoreStatus.FECHADA;
         }
-        if (automaticPause && ordersInProgress >= maxOrdersInProgress) {
+        if (!capacityPolicy.canAcceptOrder(this, ordersInProgress)) {
             return StoreStatus.PAUSADA;
         }
         return StoreStatus.ABERTA;
