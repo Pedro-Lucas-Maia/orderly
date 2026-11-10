@@ -5,11 +5,24 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalTime;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BurgerCapacityPolicyTest {
 
     private final BurgerCapacityPolicy policy = new BurgerCapacityPolicy();
+
+    @Test
+    void throwsException_whenStoreIsNull() {
+        assertThrows(NullPointerException.class, () -> policy.canAcceptOrder(null, 0));
+    }
+
+    @Test
+    void throwsException_whenCurrentOrdersInProgressIsNegative() {
+        Store store = store(true, 5);
+
+        assertThrows(IllegalArgumentException.class, () -> policy.canAcceptOrder(store, -1));
+    }
 
     @Test
     void acceptsOrder_whenOrdersInProgressBelowLimit() {
