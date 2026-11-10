@@ -8,6 +8,7 @@ import bti.pds.dinner.store.domain.StoreRepository;
 import bti.pds.dinner.store.domain.StoreStatus;
 import org.springframework.stereotype.Repository;
 
+import java.time.Clock;
 import java.time.LocalTime;
 
 @Repository
@@ -16,15 +17,18 @@ public class JpaStoreAvailability implements StoreAvailability {
     private final StoreRepository storeRepository;
     private final OrdersInProgressCounter ordersInProgressCounter;
     private final StoreCapacityPolicy storeCapacityPolicy;
+    private final Clock clock;
 
     public JpaStoreAvailability(
             StoreRepository storeRepository,
             OrdersInProgressCounter ordersInProgressCounter,
-            StoreCapacityPolicy storeCapacityPolicy
+            StoreCapacityPolicy storeCapacityPolicy,
+            Clock clock
     ) {
         this.storeRepository = storeRepository;
         this.ordersInProgressCounter = ordersInProgressCounter;
         this.storeCapacityPolicy = storeCapacityPolicy;
+        this.clock = clock;
     }
 
     @Override
@@ -36,7 +40,7 @@ public class JpaStoreAvailability implements StoreAvailability {
 
     private boolean refreshAndCheckAvailability(Store store) {
         if (store.refreshAutomaticStatus(
-                LocalTime.now(),
+                LocalTime.now(clock),
                 ordersInProgressCounter.countOrdersInProgress(),
                 storeCapacityPolicy
         )) {
