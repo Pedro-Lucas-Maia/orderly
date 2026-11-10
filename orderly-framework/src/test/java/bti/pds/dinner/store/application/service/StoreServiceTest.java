@@ -7,7 +7,10 @@ import bti.pds.dinner.store.domain.StoreRepository;
 import bti.pds.dinner.store.domain.StoreStatus;
 import org.junit.jupiter.api.Test;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -15,12 +18,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class StoreServiceTest {
 
     private final StoreCapacityPolicy capacityPolicy = new FakeStoreCapacityPolicy();
+    private final Clock clock = Clock.fixed(Instant.parse("2026-03-01T12:00:00Z"), ZoneId.of("America/Sao_Paulo"));
 
     @Test
     void pausesStoreWhenPendingOrdersReachItsLimit() {
         Store store = store();
         FakeStoreRepository stores = new FakeStoreRepository(store);
-        StoreService service = new StoreService(stores, () -> 3, capacityPolicy);
+        StoreService service = new StoreService(stores, () -> 3, capacityPolicy, clock);
 
         service.refreshAutomaticStatuses(LocalTime.NOON);
 
@@ -32,7 +36,7 @@ class StoreServiceTest {
         Store store = store();
         store.refreshAutomaticStatus(LocalTime.NOON, 3, capacityPolicy);
         FakeStoreRepository stores = new FakeStoreRepository(store);
-        StoreService service = new StoreService(stores, () -> 2, capacityPolicy);
+        StoreService service = new StoreService(stores, () -> 2, capacityPolicy, clock);
 
         service.refreshAutomaticStatuses(LocalTime.NOON);
 
@@ -43,7 +47,7 @@ class StoreServiceTest {
     void updatesManualStatusAndClearsIt() {
         Store store = store();
         FakeStoreRepository stores = new FakeStoreRepository(store);
-        StoreService service = new StoreService(stores, () -> 0, capacityPolicy);
+        StoreService service = new StoreService(stores, () -> 0, capacityPolicy, clock);
 
         service.updateStatusManually(new UpdateStoreStatusInput(StoreStatus.FECHADA));
         assertEquals(StoreStatus.FECHADA, store.getStatus());
@@ -56,8 +60,8 @@ class StoreServiceTest {
         return new Store(
                 1L,
                 "Dinner",
-                LocalTime.of(0, 0),
-                LocalTime.of(0, 0),
+                LocalTime.of(8, 0),
+                LocalTime.of(20, 0),
                 3,
                 true,
                 StoreStatus.FECHADA,

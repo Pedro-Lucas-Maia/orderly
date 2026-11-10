@@ -6,12 +6,20 @@ import java.time.LocalTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class StoreTest {
 
     private final StoreCapacityPolicy capacityPolicy = (store, currentOrders) ->
             !store.isAutomaticPause() || currentOrders < store.getMaxOrdersInProgress();
+
+    @Test
+    void throwsException_whenCapacityPolicyIsNull() {
+        Store store = store(true);
+
+        assertThrows(NullPointerException.class, () -> store.refreshAutomaticStatus(LocalTime.NOON, 0, null));
+    }
 
     @Test
     void pausesAutomatically_whenDemandReachesConfiguredLimit() {
