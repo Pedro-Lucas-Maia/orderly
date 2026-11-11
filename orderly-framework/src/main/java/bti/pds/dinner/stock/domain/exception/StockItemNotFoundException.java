@@ -1,7 +1,9 @@
 package bti.pds.dinner.stock.domain.exception;
 
-public class StockItemNotFoundException extends RuntimeException {
+import bti.pds.dinner.common.exception.ResourceNotFoundException;
+
+public class StockItemNotFoundException extends ResourceNotFoundException {
     public StockItemNotFoundException(String message) {
-        super(message);
+        super("Stock item not found", message);
     }
 }

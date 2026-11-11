@@ -1,7 +1,10 @@
 package bti.pds.dinner.stock.domain.exception;
 
-public class InsufficientStockException extends RuntimeException {
+import bti.pds.dinner.common.exception.BusinessRuleException;
+import bti.pds.dinner.common.exception.ErrorCategory;
+
+public class InsufficientStockException extends BusinessRuleException {
     public InsufficientStockException(String message) {
-        super(message);
+        super("Insufficient stock", message, ErrorCategory.CONFLICT);
     }
 }
