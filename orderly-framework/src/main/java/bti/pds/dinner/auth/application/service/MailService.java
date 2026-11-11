@@ -2,15 +2,14 @@ package bti.pds.dinner.auth.application.service;
 
 import bti.pds.dinner.auth.domain.User;
 import bti.pds.dinner.auth.infrastructure.mail.EmailSender;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class MailService {
     private final EmailSender emailSender;
-    private final Logger logger = LoggerFactory.getLogger(MailService.class);
 
     public MailService(EmailSender emailSender) {
         this.emailSender = emailSender;
@@ -18,7 +17,7 @@ public class MailService {
 
     public void sendVerificationEmail(@NonNull User user, String token) {
         String verifyLink = "http://localhost:3000/verificar?token=" + token;
-        logger.info(verifyLink);
+        log.debug("Generated verification link for dev testing. userId={}, link={}", user.getId().uuid(), verifyLink);
         String subject = "Confirme seu e-mail | Orderly";
         String content = buildEmailTemplate(
                 "Confirmação de Cadastro",
@@ -31,11 +30,12 @@ public class MailService {
         );
 
         emailSender.sendEmail(user.getEmail(), subject, content);
+        log.info("Transactional email sent successfully. emailType=ACCOUNT_VERIFICATION, userId={}", user.getId().uuid());
     }
 
     public void sendResetPasswordEmail(@NonNull User user, String token) {
         String resetLink = "http://localhost:3000/password-reset/validate?token=" + token;
-        logger.info(resetLink);
+        log.debug("Generated password reset link for dev testing. userId={}, link={}", user.getId().uuid(), resetLink);
         String subject = "Redefinição de senha | Orderly";
         String content = buildEmailTemplate(
                 "Recuperação de Acesso",
@@ -48,9 +48,10 @@ public class MailService {
         );
 
         emailSender.sendEmail(user.getEmail(), subject, content);
+        log.info("Transactional email sent successfully. emailType=PASSWORD_RESET, userId={}", user.getId().uuid());
     }
 
-    private String buildEmailTemplate(
+    private @NonNull String buildEmailTemplate(
             String badgeText,
             String heading,
             String userName,
