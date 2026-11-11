@@ -1,9 +1,9 @@
 package bti.pds.dinner.auth.domain.exception;
 
-import org.springframework.http.HttpStatus;
+import bti.pds.dinner.common.exception.UnauthorizedException;
 
-public class UserNotVerifiedException extends AuthException {
+public class UserNotVerifiedException extends UnauthorizedException {
     public UserNotVerifiedException(String message) {
-        super("User not verified", message, HttpStatus.UNAUTHORIZED);
+        super("User not verified", message);
     }
 }

@@ -1,9 +1,10 @@
 package bti.pds.dinner.auth.domain.exception;
 
-import org.springframework.http.HttpStatus;
+import bti.pds.dinner.common.exception.DomainValidationException;
+import bti.pds.dinner.common.exception.ErrorCategory;
 
-public class EmailNotValidException extends AuthException {
+public class EmailNotValidException extends DomainValidationException {
     public EmailNotValidException(String message) {
-        super("E-mail not valid", message, HttpStatus.UNPROCESSABLE_CONTENT);
+        super("E-mail not valid", message, ErrorCategory.UNPROCESSABLE);
     }
 }

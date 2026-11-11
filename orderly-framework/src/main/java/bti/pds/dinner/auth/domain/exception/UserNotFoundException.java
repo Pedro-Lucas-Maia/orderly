@@ -1,9 +1,9 @@
 package bti.pds.dinner.auth.domain.exception;
 
-import org.springframework.http.HttpStatus;
+import bti.pds.dinner.common.exception.ResourceNotFoundException;
 
-public class UserNotFoundException extends AuthException {
+public class UserNotFoundException extends ResourceNotFoundException {
     public UserNotFoundException(String message) {
-        super("User not found", message, HttpStatus.NOT_FOUND);
+        super("User not found", message);
     }
 }

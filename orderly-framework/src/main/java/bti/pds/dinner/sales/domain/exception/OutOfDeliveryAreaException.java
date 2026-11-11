@@ -1,7 +1,9 @@
 package bti.pds.dinner.sales.domain.exception;
 
-public class OutOfDeliveryAreaException extends RuntimeException {
+import bti.pds.dinner.common.exception.BusinessRuleException;
+
+public class OutOfDeliveryAreaException extends BusinessRuleException {
     public OutOfDeliveryAreaException(String message) {
-        super(message);
+        super("Out of delivery area", message);
     }
 }
