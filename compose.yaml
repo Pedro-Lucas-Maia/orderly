@@ -27,3 +27,17 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  otel-lgtm:
+    image: 'grafana/otel-lgtm:latest'
+    ports:
+      - '3000:3000'   # Interface Web do Grafana (http://localhost:3000)
+      - '4317:4317'   # Receptor OTLP via gRPC
+      - '4318:4318'   # Receptor OTLP via HTTP (usado pelo Spring Boot)
+    environment:
+      - GF_PATHS_DATA=/data/grafana
+    volumes:
+      - lgtm_data:/data
+
+volumes:
+  lgtm_data:
