@@ -1,7 +1,10 @@
 package bti.pds.dinner.product.domain.exception;
 
-public class UrlNotValidException extends RuntimeException {
+import bti.pds.dinner.common.exception.BusinessRuleException;
+import bti.pds.dinner.common.exception.ErrorCategory;
+
+public class UrlNotValidException extends BusinessRuleException {
     public UrlNotValidException(String message) {
-        super(message);
+        super("Invalid URL", message, ErrorCategory.UNPROCESSABLE);
     }
 }

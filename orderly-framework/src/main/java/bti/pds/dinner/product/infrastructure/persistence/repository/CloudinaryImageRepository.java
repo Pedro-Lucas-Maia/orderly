@@ -25,7 +25,7 @@ public class CloudinaryImageRepository implements ProductImageRepository {
 
             return uploadResult.get("secure_url").toString();
         } catch (IOException e) {
-            throw new ImageStorageException("Failed to send image to the cloud");
+            throw new ImageStorageException("Failed to send image to the cloud", e);
         }
     }
 
@@ -36,7 +36,7 @@ public class CloudinaryImageRepository implements ProductImageRepository {
 
             cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
         } catch (IOException e) {
-            throw new ImageStorageException("Failed to delete image from the cloud");
+            throw new ImageStorageException("Failed to delete image from the cloud", e);
         }
     }
 
@@ -53,7 +53,7 @@ public class CloudinaryImageRepository implements ProductImageRepository {
 
             return uploadResult.get("secure_url").toString();
         } catch (IOException e) {
-            throw new ImageStorageException("Failed to replace cloud image");
+            throw new ImageStorageException("Failed to replace cloud image", e);
         }
     }
 
