@@ -1,7 +1,7 @@
 package bti.pds.dinner.shoppingCart.domain;
 
-import bti.pds.dinner.shoppingCart.domain.exceptions.EmptyCartException;
-import bti.pds.dinner.shoppingCart.domain.exceptions.ItemNotFoundException;
+import bti.pds.dinner.shoppingCart.domain.exception.EmptyCartException;
+import bti.pds.dinner.shoppingCart.domain.exception.ItemNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
