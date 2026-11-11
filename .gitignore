@@ -34,3 +34,6 @@ build/
 
 ### Env variables ###
 /orderly-framework/src/main/resources/env/**
+
+## AI instructions file
+GEMINI.md
