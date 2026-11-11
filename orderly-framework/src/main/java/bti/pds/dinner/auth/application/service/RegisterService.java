@@ -8,6 +8,8 @@ import bti.pds.dinner.auth.domain.exception.CpfNotValidException;
 import bti.pds.dinner.auth.domain.exception.EmailNotValidException;
 import bti.pds.dinner.auth.domain.exception.RoleNotFoundException;
 import bti.pds.dinner.auth.domain.exception.UserNotFoundException;
+import io.micrometer.observation.annotation.Observed;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class RegisterService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -33,6 +36,7 @@ public class RegisterService {
     }
 
     @Transactional
+    @Observed(name = "auth.user.register")
     public UserOutput register(@NonNull RegisterInput registerInput) {
         checkEmailUniqueness(registerInput.email());
         checkCpfUniqueness(registerInput.cpf());
@@ -43,24 +47,31 @@ public class RegisterService {
 
         publishRegisterEvent(user);
 
+        log.info("User registered successfully. userId={}, role={}", user.getId().uuid(), role.getName());
+
         return new UserOutput(user.getId().uuid(), user.getName(), user.getEmail(), role.getName());
     }
 
     private void checkEmailUniqueness(String email) {
         if (userRepository.existsByEmail(email)) {
+            log.warn("Registration rejected: email already in use. maskedEmail={}", LogMaskUtils.maskEmail(email));
             throw new EmailNotValidException("Email already in use");
         }
     }
 
     private void checkCpfUniqueness(String cpf) {
         if (userRepository.existsByCpf(cpf)) {
-            throw new CpfNotValidException("Cpf " + cpf + " already exists");
+            log.warn("Registration rejected: CPF already exists. maskedCpf={}", LogMaskUtils.maskCpf(cpf));
+            throw new CpfNotValidException("CPF already registered in the system");
         }
     }
 
     private @NonNull Role findRoleOrThrow() {
         return roleRepository.findByName("ROLE_USER")
-                .orElseThrow(() -> new RoleNotFoundException("Default role not found"));
+                .orElseThrow(() -> {
+                    log.error("Critical configuration error: Default role ROLE_USER not found in the database");
+                    return new RoleNotFoundException("Default role not found");
+                });
     }
 
     private User saveUserToDb(@NonNull RegisterInput registerInput, @NonNull Role role) {
@@ -75,19 +86,32 @@ public class RegisterService {
         OnUserRegisteredEvent event = new OnUserRegisteredEvent(user, token);
 
         applicationEventPublisher.publishEvent(event);
+
+        log.debug("Published OnUserRegisteredEvent for userId={}", user.getId().uuid());
     }
 
     @Transactional
+    @Observed(name = "auth.user.verify_token")
     public UserOutput verifyToken(String token) {
         UUID userId = accountVerificationService.verifyToken(token);
         User user = userRepository.findById(new UserId(userId))
-                .orElseThrow(() -> new UserNotFoundException("User not found after token verification"));
+                .orElseThrow(() -> {
+                    log.error("Data inconsistency: Valid verification token points to non-existent user. userId={}", userId);
+                    return new UserNotFoundException("User not found after token verification");
+                });
 
         var enabledUser = user.enable();
         User savedUser = userRepository.save(enabledUser);
         var role = roleRepository.findById(savedUser.getRoleId())
-                .orElseThrow(() -> new RoleNotFoundException("Role with the id " + savedUser.getRoleId().uuid() + " not found"));
+                .orElseThrow(() -> {
+                    log.error("Data inconsistency: User assigned to non-existent role. userId={}, roleId={}",
+                            savedUser.getId().uuid(), savedUser.getRoleId().uuid());
+                    return new RoleNotFoundException("Role with the id " + savedUser.getRoleId().uuid() + " not found");
+                });
+
+        log.info("User account verified and enabled. userId={}, role={}", user.getId().uuid(), role.getName());
 
         return new UserOutput(savedUser.getId().uuid(), savedUser.getName(), savedUser.getEmail(), role.getName());
     }
+
 }
