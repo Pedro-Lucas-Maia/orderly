@@ -9,13 +9,21 @@ services:
       - '5432:5432'
     volumes:
       - ./scripts/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql
-
+    labels:
+      org.springframework.boot.ignore: "true"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U myuser -d mydatabase" ]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
   redis:
-        image: 'redis:latest'
-        ports:
-          - '6379:6379'
+    image: 'redis:latest'
+    ports:
+      - '6379:6379'
+    labels:
+      org.springframework.boot.ignore: "true"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
