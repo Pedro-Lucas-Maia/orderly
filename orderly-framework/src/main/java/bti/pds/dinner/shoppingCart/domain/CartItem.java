@@ -1,6 +1,6 @@
 package bti.pds.dinner.shoppingCart.domain;
 
-import bti.pds.dinner.shoppingCart.domain.exceptions.InvalidInputException;
+import bti.pds.dinner.shoppingCart.domain.exception.InvalidInputException;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

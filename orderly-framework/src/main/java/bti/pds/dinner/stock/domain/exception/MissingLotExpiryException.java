@@ -1,7 +1,9 @@
 package bti.pds.dinner.stock.domain.exception;
 
-public class MissingLotExpiryException extends RuntimeException {
+import bti.pds.dinner.common.exception.BusinessRuleException;
+
+public class MissingLotExpiryException extends BusinessRuleException {
     public MissingLotExpiryException() {
-        super("Expiry date is required for ENTRADA movements");
+        super("Missing lot expiry", "Expiry date is required for ENTRADA movements");
     }
 }

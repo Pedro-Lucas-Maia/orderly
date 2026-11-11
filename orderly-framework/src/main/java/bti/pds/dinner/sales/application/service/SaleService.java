@@ -5,7 +5,7 @@ import bti.pds.dinner.sales.application.input.SaleItemInput;
 import bti.pds.dinner.sales.application.output.SaleOutput;
 import bti.pds.dinner.sales.domain.*;
 import bti.pds.dinner.sales.domain.exception.InvalidSaleStateException;
-import bti.pds.dinner.sales.domain.exception.SaleException;
+import bti.pds.dinner.sales.domain.exception.InvalidSaleItemException;
 import bti.pds.dinner.sales.domain.exception.SaleNotFoundException;
 import bti.pds.dinner.sales.domain.exception.StoreUnavailableException;
 import org.jspecify.annotations.NonNull;
@@ -91,7 +91,7 @@ public class SaleService {
 
     private void validateInput(CreateSaleInput input) {
         if (input == null || input.items() == null || input.items().isEmpty()) {
-            throw new SaleException("A sale must contain at least one item.");
+            throw new InvalidSaleItemException("A sale must contain at least one item.");
         }
     }
 

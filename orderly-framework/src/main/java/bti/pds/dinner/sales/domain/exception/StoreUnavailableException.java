@@ -1,7 +1,9 @@
 package bti.pds.dinner.sales.domain.exception;
 
-public class StoreUnavailableException extends SaleException {
+import bti.pds.dinner.common.exception.ConflictException;
+
+public class StoreUnavailableException extends ConflictException {
     public StoreUnavailableException() {
-        super("Store is not available for orders");
+        super("Store unavailable", "Store is not available for orders");
     }
 }

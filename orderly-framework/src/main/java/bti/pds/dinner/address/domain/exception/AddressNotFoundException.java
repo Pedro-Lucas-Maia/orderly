@@ -1,7 +1,9 @@
 package bti.pds.dinner.address.domain.exception;
 
-public class AddressNotFoundException extends RuntimeException {
+import bti.pds.dinner.common.exception.ResourceNotFoundException;
+
+public class AddressNotFoundException extends ResourceNotFoundException {
     public AddressNotFoundException(String message) {
-        super(message);
+        super("Address not found", message);
     }
 }

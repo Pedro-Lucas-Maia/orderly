@@ -1,7 +1,9 @@
 package bti.pds.dinner.store.domain.exception;
 
-public class StoreNotFoundException extends RuntimeException {
+import bti.pds.dinner.common.exception.ResourceNotFoundException;
+
+public class StoreNotFoundException extends ResourceNotFoundException {
     public StoreNotFoundException() {
-        super("Default Store not found");
+        super("Store not found", "Default Store not found");
     }
 }

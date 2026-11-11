@@ -1,7 +1,10 @@
 package bti.pds.dinner.store.domain.exception;
 
-public class InvalidStoreConfigurationException extends RuntimeException {
+import bti.pds.dinner.common.exception.BusinessRuleException;
+import bti.pds.dinner.common.exception.ErrorCategory;
+
+public class InvalidStoreConfigurationException extends BusinessRuleException {
     public InvalidStoreConfigurationException(String message) {
-        super(message);
+        super("Invalid store configuration", message, ErrorCategory.UNPROCESSABLE);
     }
 }

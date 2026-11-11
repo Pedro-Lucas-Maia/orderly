@@ -5,7 +5,7 @@ import bti.pds.dinner.reports.application.output.SalesReportOutput;
 import bti.pds.dinner.reports.application.output.SalesReportOutputMapper;
 import bti.pds.dinner.reports.application.output.StockReportOutput;
 import bti.pds.dinner.reports.application.output.StockReportOutputMapper;
-import bti.pds.dinner.reports.domain.InvalidReportPeriodException;
+import bti.pds.dinner.reports.domain.exception.InvalidReportPeriodException;
 import bti.pds.dinner.reports.domain.sales.*;
 import bti.pds.dinner.reports.domain.stock.*;
 import org.jspecify.annotations.NonNull;

@@ -1,5 +1,6 @@
 package bti.pds.dinner.auth.infrastructure.mail;
 
+import bti.pds.dinner.auth.domain.exception.EmailDeliveryException;
 import com.resend.Resend;
 import com.resend.services.emails.model.CreateEmailOptions;
 import com.resend.services.emails.model.CreateEmailResponse;
@@ -32,7 +33,7 @@ public class ResendEmailSender implements EmailSender {
             CreateEmailResponse data = resend.emails().send(params);
             log.info("Resend email sent to: {}, with {}", to, data);
         } catch (Exception e) {
-            log.error("Failed to send email to: {}", to, e);
+            throw new EmailDeliveryException("Failed to communicate with resend API", e);
         }
     }
 }

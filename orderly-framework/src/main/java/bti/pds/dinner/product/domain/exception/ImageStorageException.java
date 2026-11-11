@@ -1,7 +1,9 @@
 package bti.pds.dinner.product.domain.exception;
 
-public class ImageStorageException extends RuntimeException {
-    public ImageStorageException(String message) {
-        super(message);
+import bti.pds.dinner.common.exception.ExternalServiceException;
+
+public class ImageStorageException extends ExternalServiceException {
+    public ImageStorageException(String message, Throwable cause) {
+        super("Image storage error", message, cause);
     }
 }

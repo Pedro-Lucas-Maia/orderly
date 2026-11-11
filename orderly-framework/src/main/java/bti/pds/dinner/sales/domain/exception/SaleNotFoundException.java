@@ -1,7 +1,9 @@
 package bti.pds.dinner.sales.domain.exception;
 
-public class SaleNotFoundException extends SaleException {
+import bti.pds.dinner.common.exception.ResourceNotFoundException;
+
+public class SaleNotFoundException extends ResourceNotFoundException {
     public SaleNotFoundException(String message) {
-        super(message);
+        super("Sale not found", message);
     }
 }

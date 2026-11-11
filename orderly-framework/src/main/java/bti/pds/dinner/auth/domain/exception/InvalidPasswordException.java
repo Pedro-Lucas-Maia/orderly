@@ -1,9 +1,10 @@
 package bti.pds.dinner.auth.domain.exception;
 
-import org.springframework.http.HttpStatus;
+import bti.pds.dinner.common.exception.DomainValidationException;
+import bti.pds.dinner.common.exception.ErrorCategory;
 
-public class InvalidPasswordException extends AuthException {
+public class InvalidPasswordException extends DomainValidationException {
     public InvalidPasswordException(String message) {
-        super("Invalid password", message, HttpStatus.UNPROCESSABLE_CONTENT);
+        super("Invalid password", message, ErrorCategory.UNPROCESSABLE);
     }
 }

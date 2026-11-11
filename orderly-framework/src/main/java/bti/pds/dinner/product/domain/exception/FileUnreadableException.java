@@ -1,7 +1,10 @@
 package bti.pds.dinner.product.domain.exception;
 
-public class FileUnreadableException extends RuntimeException {
+import bti.pds.dinner.common.exception.BusinessRuleException;
+import bti.pds.dinner.common.exception.ErrorCategory;
+
+public class FileUnreadableException extends BusinessRuleException {
     public FileUnreadableException(String message) {
-        super(message);
+        super("File unreadable", message, ErrorCategory.UNPROCESSABLE);
     }
 }

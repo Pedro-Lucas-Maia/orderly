@@ -1,9 +1,9 @@
 package bti.pds.dinner.auth.domain.exception;
 
-import org.springframework.http.HttpStatus;
+import bti.pds.dinner.common.exception.ResourceNotFoundException;
 
-public class RoleNotFoundException extends AuthException {
+public class RoleNotFoundException extends ResourceNotFoundException {
     public RoleNotFoundException(String message) {
-        super("Role not found", message, HttpStatus.NOT_FOUND);
+        super("Role not found", message);
     }
 }

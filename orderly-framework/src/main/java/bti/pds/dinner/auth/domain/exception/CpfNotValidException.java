@@ -1,9 +1,10 @@
 package bti.pds.dinner.auth.domain.exception;
 
-import org.springframework.http.HttpStatus;
+import bti.pds.dinner.common.exception.DomainValidationException;
+import bti.pds.dinner.common.exception.ErrorCategory;
 
-public class CpfNotValidException extends AuthException {
+public class CpfNotValidException extends DomainValidationException {
     public CpfNotValidException(String message) {
-        super("CPF not valid", message, HttpStatus.UNPROCESSABLE_CONTENT);
+        super("CPF not valid", message, ErrorCategory.UNPROCESSABLE);
     }
 }

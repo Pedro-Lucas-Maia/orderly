@@ -1,7 +1,10 @@
 package bti.pds.dinner.product.domain.exception;
 
-public class InvalidInputException extends RuntimeException {
+import bti.pds.dinner.common.exception.BusinessRuleException;
+import bti.pds.dinner.common.exception.ErrorCategory;
+
+public class InvalidInputException extends BusinessRuleException {
     public InvalidInputException(String message) {
-        super(message);
+        super("Invalid product input", message, ErrorCategory.UNPROCESSABLE);
     }
 }

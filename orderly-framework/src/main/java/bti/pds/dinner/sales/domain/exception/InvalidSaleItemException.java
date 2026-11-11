@@ -1,7 +1,9 @@
 package bti.pds.dinner.sales.domain.exception;
 
-public class InvalidSaleItemException extends SaleException {
+import bti.pds.dinner.common.exception.BusinessRuleException;
+
+public class InvalidSaleItemException extends BusinessRuleException {
     public InvalidSaleItemException(String message) {
-        super(message);
+        super("Invalid sale item", message);
     }
 }

@@ -1,7 +1,7 @@
 package bti.pds.dinner.sales.domain;
 
 import bti.pds.dinner.sales.domain.exception.InvalidSaleStateException;
-import bti.pds.dinner.sales.domain.exception.SaleException;
+import bti.pds.dinner.sales.domain.exception.InvalidSaleItemException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -40,7 +40,7 @@ public class Sale {
             OrderPricingStrategy pricingStrategy
     ) {
         if (items == null || items.isEmpty()) {
-            throw new SaleException("A sale must contain at least one item");
+            throw new InvalidSaleItemException("A sale must contain at least one item");
         }
         Objects.requireNonNull(pricingStrategy,  "Pricing strategy is required to create a sale");
         Sale sale = new SaleBuilder()

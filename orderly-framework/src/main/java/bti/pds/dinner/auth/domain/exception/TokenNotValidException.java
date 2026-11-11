@@ -1,9 +1,9 @@
 package bti.pds.dinner.auth.domain.exception;
 
-import org.springframework.http.HttpStatus;
+import bti.pds.dinner.common.exception.UnauthorizedException;
 
-public class TokenNotValidException extends AuthException {
+public class TokenNotValidException extends UnauthorizedException {
     public TokenNotValidException(String message) {
-        super("Token not valid", message, HttpStatus.UNAUTHORIZED);
+        super("Token not valid", message);
     }
 }
