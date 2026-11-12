@@ -2,11 +2,7 @@ package bti.pds.dinner.insights.domain;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -20,13 +16,13 @@ public final class ExpiryPromotionCalculator {
             List<StockLotSnapshot> lots,
             List<StockItemSnapshot> items,
             List<RecipeLine> recipes,
-            List<DemandForecastCalculator.ProductDemand> demand
+            List<ProductDemand> demand
     ) {
         LocalDate deadline = targetDate.plusDays(expiryWindowDays);
         Map<Long, StockItemSnapshot> itemsById = items.stream()
                 .collect(Collectors.toMap(StockItemSnapshot::id, Function.identity()));
-        Map<Long, DemandForecastCalculator.ProductDemand> demandByProduct = demand.stream()
-                .collect(Collectors.toMap(DemandForecastCalculator.ProductDemand::productId, Function.identity()));
+        Map<Long, ProductDemand> demandByProduct = demand.stream()
+                .collect(Collectors.toMap(ProductDemand::productId, Function.identity()));
         Map<Long, List<Long>> productsByItem = recipes.stream()
                 .collect(Collectors.groupingBy(
                         RecipeLine::stockItemId,
@@ -57,9 +53,9 @@ public final class ExpiryPromotionCalculator {
                             .map(demandByProduct::get)
                             .filter(Objects::nonNull)
                             .sorted(Comparator
-                                    .comparingInt(DemandForecastCalculator.ProductDemand::predictedQuantity).reversed()
-                                    .thenComparing(DemandForecastCalculator.ProductDemand::unitPrice, Comparator.reverseOrder())
-                                    .thenComparing(DemandForecastCalculator.ProductDemand::productId))
+                                    .comparingInt(ProductDemand::predictedQuantity).reversed()
+                                    .thenComparing(ProductDemand::unitPrice, Comparator.reverseOrder())
+                                    .thenComparing(ProductDemand::productId))
                             .map(product -> new SuggestedProduct(
                                     product.productId(),
                                     product.productName(),

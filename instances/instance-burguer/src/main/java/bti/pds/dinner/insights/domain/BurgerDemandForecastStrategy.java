@@ -1,25 +1,60 @@
 package bti.pds.dinner.insights.domain;
 
-import java.math.BigDecimal;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public final class DemandForecastCalculator {
+@Component
+public class BurgerDemandForecastStrategy implements DemandForecastStrategy {
+
     public static final String METHOD = "WEEKDAY_AVERAGE";
 
-    private DemandForecastCalculator() {
+    private final int forecastWeeks;
+    private final int minSamplesHigh;
+    private final int minSamplesMedium;
+
+    public BurgerDemandForecastStrategy() {
+        this(8, 6, 3);
     }
 
-    public static List<ProductDemand> forecast(
-            List<CatalogProduct> products,
-            List<LocalDate> sampleDates,
-            List<DailySoldQuantity> history,
-            int minSamplesHigh,
-            int minSamplesMedium
+    @Autowired
+    public BurgerDemandForecastStrategy(
+            @Value("${app.insights.forecast-weeks:8}") int forecastWeeks,
+            @Value("${app.insights.min-samples-high:6}") int minSamplesHigh,
+            @Value("${app.insights.min-samples-medium:3}") int minSamplesMedium
     ) {
+        this.forecastWeeks = forecastWeeks;
+        this.minSamplesHigh = minSamplesHigh;
+        this.minSamplesMedium = minSamplesMedium;
+    }
+
+    @Override
+    public String getMethodName() {
+        return METHOD;
+    }
+
+    @Override
+    public int getHistoryLookbackDays() {
+        return forecastWeeks * 7;
+    }
+
+    @Override
+    public List<ProductDemand> forecast(
+            List<CatalogProduct> products,
+            List<DailySoldQuantity> history,
+            LocalDate targetDate
+    ) {
+        List<LocalDate> sampleDates = new ArrayList<>();
+        for (int week = 1; week <= forecastWeeks; week++) {
+            sampleDates.add(targetDate.minusWeeks(week));
+        }
+
         Map<String, Integer> sold = new HashMap<>();
         for (DailySoldQuantity row : history) {
             sold.merge(key(row.date(), row.productId()), row.quantity(), Integer::sum);
@@ -35,11 +70,7 @@ public final class DemandForecastCalculator {
             int sampleSize;
             int predicted;
             ForecastConfidence confidence;
-            if (sampleDates.isEmpty()) {
-                sampleSize = 0;
-                predicted = 0;
-                confidence = ForecastConfidence.LOW;
-            } else if (total == 0) {
+            if (sampleDates.isEmpty() || total == 0) {
                 sampleSize = 0;
                 predicted = 0;
                 confidence = ForecastConfidence.LOW;
@@ -73,16 +104,5 @@ public final class DemandForecastCalculator {
 
     private static String key(LocalDate date, Long productId) {
         return date + ":" + productId;
-    }
-
-    public record ProductDemand(
-            Long productId,
-            String productName,
-            BigDecimal unitPrice,
-            int predictedQuantity,
-            String method,
-            int sampleSize,
-            ForecastConfidence confidence
-    ) {
     }
 }
