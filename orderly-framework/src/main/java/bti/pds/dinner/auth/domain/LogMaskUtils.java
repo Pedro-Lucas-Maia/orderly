@@ -1,4 +1,4 @@
-package bti.pds.dinner.auth.application.service;
+package bti.pds.dinner.auth.domain;
 
 import org.jspecify.annotations.NonNull;
 
