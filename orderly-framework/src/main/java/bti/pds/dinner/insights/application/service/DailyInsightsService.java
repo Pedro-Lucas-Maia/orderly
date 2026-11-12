@@ -84,7 +84,7 @@ public class DailyInsightsService {
 
         List<CatalogProduct> products = productCatalog.findActiveProducts();
         List<DailySoldQuantity> history = salesHistory.findDailyQuantities(from, to);
-        List<DemandForecastCalculator.ProductDemand> demand = DemandForecastCalculator.forecast(
+        List<ProductDemand> demand = DemandForecastCalculator.forecast(
                 products, sampleDates, history, minSamplesHigh, minSamplesMedium
         );
 

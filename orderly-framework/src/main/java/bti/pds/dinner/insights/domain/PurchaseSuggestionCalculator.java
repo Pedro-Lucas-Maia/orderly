@@ -1,10 +1,6 @@
 package bti.pds.dinner.insights.domain;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public final class PurchaseSuggestionCalculator {
@@ -12,13 +8,13 @@ public final class PurchaseSuggestionCalculator {
     }
 
     public static List<PurchaseSuggestion> suggest(
-            List<DemandForecastCalculator.ProductDemand> demand,
+            List<ProductDemand> demand,
             List<RecipeLine> recipes,
             List<StockItemSnapshot> items,
             int horizonDays
     ) {
         Map<Long, Integer> predictedByProduct = demand.stream()
-                .collect(Collectors.toMap(DemandForecastCalculator.ProductDemand::productId, DemandForecastCalculator.ProductDemand::predictedQuantity));
+                .collect(Collectors.toMap(ProductDemand::productId, ProductDemand::predictedQuantity));
 
         Map<Long, Integer> consumption = new HashMap<>();
         Map<Long, List<Long>> affected = new HashMap<>();

@@ -75,14 +75,4 @@ public final class DemandForecastCalculator {
         return date + ":" + productId;
     }
 
-    public record ProductDemand(
-            Long productId,
-            String productName,
-            BigDecimal unitPrice,
-            int predictedQuantity,
-            String method,
-            int sampleSize,
-            ForecastConfidence confidence
-    ) {
-    }
 }
