@@ -36,14 +36,15 @@ public class LoginService {
     public UserOutput login(@NonNull LoginInput loginInput) {
         User user = fetchUserOrThrow(loginInput.email());
 
+
+        if (!isPasswordValid(user, loginInput.password())) {
+            handleFailedAttempt(user);
+        }
+
         var notLockedUser = user.verifyUserNotLocked(LocalDateTime.now(), MINUTES_OF_LOCKOUT);
 
         if(!notLockedUser.isEnabled()) {
             throw new UserNotVerifiedException("user with the email " +  user.getEmail() + " not verified, please check your email");
-        }
-
-        if (!isPasswordValid(notLockedUser, loginInput.password())) {
-            handleFailedAttempt(notLockedUser);
         }
 
         return handleSuccessfulLogin(notLockedUser);
