@@ -12,14 +12,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class InsightsCalculatorsTest {
 
+    private static final String TEST_METHOD = "TEST_METHOD";
+
     @Test
     void purchaseGapUsesCompositionAndHorizon() {
-        var demand = List.of(new DemandForecastCalculator.ProductDemand(
-                1L, "Classic Burger", new BigDecimal("28.90"), 15,
-                DemandForecastCalculator.METHOD, 8, ForecastConfidence.HIGH
+        var demand = List.of(new ProductDemand(
+                1L, "Product A", new BigDecimal("28.90"), 15,
+                TEST_METHOD, 8, ForecastConfidence.HIGH
         ));
         var recipes = List.of(new RecipeLine(1L, 10L, 1));
-        var items = List.of(new StockItemSnapshot(10L, "Pão", "UNIDADE", 8, 10));
+        var items = List.of(new StockItemSnapshot(10L, "Component A", "UNIT", 8, 10));
 
         PurchaseSuggestionCalculator.PurchaseSuggestion suggestion =
                 PurchaseSuggestionCalculator.suggest(demand, recipes, items, 1).getFirst();
@@ -33,8 +35,8 @@ class InsightsCalculatorsTest {
     @Test
     void criticalStockListsItemsAtOrBelowMinimum() {
         var items = List.of(
-                new StockItemSnapshot(10L, "Pão", "UNIDADE", 8, 10),
-                new StockItemSnapshot(11L, "Carne", "UNIDADE", 40, 10)
+                new StockItemSnapshot(10L, "Component A", "UNIT", 8, 10),
+                new StockItemSnapshot(11L, "Component B", "UNIT", 40, 10)
         );
         var recipes = List.of(new RecipeLine(1L, 10L, 1));
 
@@ -48,15 +50,15 @@ class InsightsCalculatorsTest {
     @Test
     void promotionRanksProductsByPredictedDemand() {
         var demand = List.of(
-                new DemandForecastCalculator.ProductDemand(
-                        1L, "Classic Burger", new BigDecimal("28.90"), 15,
-                        DemandForecastCalculator.METHOD, 8, ForecastConfidence.HIGH),
-                new DemandForecastCalculator.ProductDemand(
-                        2L, "Bacon Supreme", new BigDecimal("34.90"), 8,
-                        DemandForecastCalculator.METHOD, 8, ForecastConfidence.HIGH)
+                new ProductDemand(
+                        1L, "Product A", new BigDecimal("28.90"), 15,
+                        TEST_METHOD, 8, ForecastConfidence.HIGH),
+                new ProductDemand(
+                        2L, "Product B", new BigDecimal("34.90"), 8,
+                        TEST_METHOD, 8, ForecastConfidence.HIGH)
         );
         var recipes = List.of(new RecipeLine(1L, 3L, 2), new RecipeLine(2L, 3L, 1));
-        var items = List.of(new StockItemSnapshot(3L, "Queijo", "UNIDADE", 100, 20));
+        var items = List.of(new StockItemSnapshot(3L, "Component C", "UNIT", 100, 20));
         var lots = List.of(new StockLotSnapshot(42L, 3L, 30, LocalDate.of(2026, 4, 2)));
 
         ExpiryPromotionCalculator.Result result = ExpiryPromotionCalculator.calculate(
@@ -71,12 +73,12 @@ class InsightsCalculatorsTest {
 
     @Test
     void purchaseMultipliesConsumptionByHorizon() {
-        var demand = List.of(new DemandForecastCalculator.ProductDemand(
-                1L, "Classic Burger", new BigDecimal("28.90"), 15,
-                DemandForecastCalculator.METHOD, 8, ForecastConfidence.HIGH
+        var demand = List.of(new ProductDemand(
+                1L, "Product A", new BigDecimal("28.90"), 15,
+                TEST_METHOD, 8, ForecastConfidence.HIGH
         ));
         var recipes = List.of(new RecipeLine(1L, 10L, 1));
-        var items = List.of(new StockItemSnapshot(10L, "Pão", "UNIDADE", 8, 10));
+        var items = List.of(new StockItemSnapshot(10L, "Component A", "UNIT", 8, 10));
 
         PurchaseSuggestionCalculator.PurchaseSuggestion suggestion =
                 PurchaseSuggestionCalculator.suggest(demand, recipes, items, 2).getFirst();
@@ -87,12 +89,12 @@ class InsightsCalculatorsTest {
 
     @Test
     void purchaseDoesNotSuggestBuyWhenStockCoversConsumption() {
-        var demand = List.of(new DemandForecastCalculator.ProductDemand(
-                1L, "Classic Burger", new BigDecimal("28.90"), 10,
-                DemandForecastCalculator.METHOD, 8, ForecastConfidence.HIGH
+        var demand = List.of(new ProductDemand(
+                1L, "Product A", new BigDecimal("28.90"), 10,
+                TEST_METHOD, 8, ForecastConfidence.HIGH
         ));
         var recipes = List.of(new RecipeLine(1L, 10L, 1));
-        var items = List.of(new StockItemSnapshot(10L, "Pão", "UNIDADE", 40, 10));
+        var items = List.of(new StockItemSnapshot(10L, "Component A", "UNIT", 40, 10));
 
         PurchaseSuggestionCalculator.PurchaseSuggestion suggestion =
                 PurchaseSuggestionCalculator.suggest(demand, recipes, items, 1).getFirst();
@@ -103,12 +105,12 @@ class InsightsCalculatorsTest {
 
     @Test
     void expiryIgnoresLotsOutsideWindowAndZeroQuantity() {
-        var demand = List.of(new DemandForecastCalculator.ProductDemand(
-                1L, "Classic Burger", new BigDecimal("28.90"), 15,
-                DemandForecastCalculator.METHOD, 8, ForecastConfidence.HIGH
+        var demand = List.of(new ProductDemand(
+                1L, "Product A", new BigDecimal("28.90"), 15,
+                TEST_METHOD, 8, ForecastConfidence.HIGH
         ));
         var recipes = List.of(new RecipeLine(1L, 3L, 2));
-        var items = List.of(new StockItemSnapshot(3L, "Queijo", "UNIDADE", 100, 20));
+        var items = List.of(new StockItemSnapshot(3L, "Component C", "UNIT", 100, 20));
         var lots = List.of(
                 new StockLotSnapshot(1L, 3L, 10, LocalDate.of(2026, 4, 10)),
                 new StockLotSnapshot(2L, 3L, 0, LocalDate.of(2026, 4, 1)),
