@@ -43,11 +43,16 @@ public class SaleStatusService {
     }
 
     @Transactional
-    public SaleOutput confirmDelivery(String saleId, UUID userId) {
+    public SaleOutput confirmDelivery(String saleId, UUID userId, boolean isRequestFromAdmin) {
         Sale sale = findSale(saleId);
-        checkAuthorization(sale.getUserId().uuid(), userId);
+        if (isNotARequestFromAdmin(isRequestFromAdmin)) {
+            checkAuthorization(sale.getUserId().uuid(), userId);
+        }
         sale.deliver();
         return SaleOutput.from(saleRepository.save(sale));
+    }
+    private boolean isNotARequestFromAdmin(boolean isRequestFromAdmin) {
+        return !isRequestFromAdmin;
     }
 
     @Transactional
