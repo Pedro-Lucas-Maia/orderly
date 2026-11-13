@@ -9,6 +9,8 @@ import bti.pds.dinner.auth.domain.User;
 import bti.pds.dinner.auth.domain.UserRepository;
 import bti.pds.dinner.auth.domain.event.OnPasswordResetedEvent;
 import bti.pds.dinner.auth.domain.exception.TokenNotValidException;
+import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class PasswordResetService {
     private final static int HOURS_TO_RESET_PASSWORD = 1;
@@ -42,12 +45,11 @@ public class PasswordResetService {
         );
 
         passwordResetTokenRepository.save(passwordResetToken);
-
         return token;
     }
 
     @Transactional
-    public void initiatePasswordReset(InitiatePasswordResetInput input) {
+    public void initiatePasswordReset(@NonNull InitiatePasswordResetInput input) {
         User user = userRepository.findByEmail(input.email()).orElse(null);
         if (user == null) {
             return;
@@ -57,16 +59,17 @@ public class PasswordResetService {
 
         String token = createPasswordResetToken(user);
         eventPublisher.publishEvent(new OnPasswordResetedEvent(user, token));
+        log.info("Initiate password reset for user. userId={}", user.getId().uuid());
     }
 
-    public void verifyToken(VerifyPasswordResetTokenInput input) {
+    public void verifyToken(@NonNull VerifyPasswordResetTokenInput input) {
         PasswordResetToken passwordResetToken = passwordResetTokenRepository.findByToken(input.token())
                 .orElseThrow(() -> new TokenNotValidException("Invalid token"));
         passwordResetToken.validate();
     }
 
     @Transactional
-    public void confirmPasswordReset(ConfirmPasswordResetInput input) {
+    public void confirmPasswordReset(@NonNull ConfirmPasswordResetInput input) {
         PasswordResetToken passwordResetToken = passwordResetTokenRepository.findByToken(input.token())
                 .orElseThrow(() -> new TokenNotValidException("Invalid token"));
         passwordResetToken.validate();
@@ -78,5 +81,6 @@ public class PasswordResetService {
         userRepository.save(user);
 
         passwordResetTokenRepository.delete(passwordResetToken);
+        log.info("Password was reset for user. userId={}", user.getId().uuid());
     }
 }

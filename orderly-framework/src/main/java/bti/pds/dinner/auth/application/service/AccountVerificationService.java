@@ -5,6 +5,7 @@ import bti.pds.dinner.auth.domain.User;
 import bti.pds.dinner.auth.domain.VerificationToken;
 import bti.pds.dinner.auth.domain.VerificationTokenRepository;
 import bti.pds.dinner.auth.domain.exception.TokenNotValidException;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class AccountVerificationService {
     private final static int HOURS_TO_VERIFY = 24;
@@ -25,7 +27,7 @@ public class AccountVerificationService {
     public String createVerificationToken(@NonNull User user) {
         String token = UUID.randomUUID().toString();
         VerificationToken newToken = new VerificationToken(token, user.getId(), LocalDateTime.now().plusHours(HOURS_TO_VERIFY));
-
+        log.info("New verification token created successfully. userId={}", user.getId());
         return verificationTokenRepository.save(newToken).getToken();
     }
 
@@ -37,6 +39,7 @@ public class AccountVerificationService {
             throw new TokenNotValidException("Token with the value " + token + " not valid");
         }
         verificationTokenRepository.delete(verificationToken);
+
         return verificationToken.getUserId().uuid();
     }
 

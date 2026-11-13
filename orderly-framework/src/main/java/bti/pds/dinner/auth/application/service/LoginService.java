@@ -9,6 +9,7 @@ import bti.pds.dinner.auth.domain.UserRepository;
 import bti.pds.dinner.auth.domain.exception.LoginNotValidException;
 import bti.pds.dinner.auth.domain.exception.RoleNotFoundException;
 import bti.pds.dinner.auth.domain.exception.UserNotVerifiedException;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 
 
+@Slf4j
 @Service
 public class LoginService {
     private static final int MAX_FAILED_ATTEMPTS = 10;
@@ -71,6 +73,7 @@ public class LoginService {
         User savedUser = userRepository.save(user.successfulLogin());
         var role = roleRepository.findById(user.getRoleId())
                 .orElseThrow(() -> new RoleNotFoundException("role of user " + user.getName() + " not found"));
+        log.info("User logged in successfully. userId={}, role={}", user.getId().uuid(), role.getName());
         return new UserOutput(savedUser.getId().uuid(), savedUser.getName(), savedUser.getEmail(), role.getName());
     }
 }
