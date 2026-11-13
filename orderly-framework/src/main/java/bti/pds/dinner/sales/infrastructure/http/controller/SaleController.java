@@ -98,10 +98,13 @@ public class SaleController {
     public ResponseEntity<SaleResponse> deliverSale(@PathVariable String id, @NonNull JwtAuthenticationToken authentication) {
         var userId = UUID.fromString(getUserId(authentication));
 
-        return ResponseEntity.ok(SaleResponse.from(saleStatusService.confirmDelivery(id, userId)));
+        return ResponseEntity.ok(SaleResponse.from(saleStatusService.confirmDelivery(id, userId, isRequestFromAdmin(authentication))));
     }
 
     private String getUserId(@NonNull JwtAuthenticationToken authentication) {
         return authentication.getToken().getClaimAsString("userId");
+    }
+    private boolean isRequestFromAdmin(@NonNull JwtAuthenticationToken authentication) {
+        return authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
     }
 }
