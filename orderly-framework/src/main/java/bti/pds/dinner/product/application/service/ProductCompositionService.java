@@ -6,12 +6,16 @@ import bti.pds.dinner.product.application.output.ProductCompositionOutput;
 import bti.pds.dinner.product.domain.*;
 import bti.pds.dinner.product.domain.exception.ProductCompositionNotFoundException;
 import bti.pds.dinner.product.domain.exception.ProductNotFoundException;
+import io.micrometer.observation.annotation.Observed;
+import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@Slf4j
 public class ProductCompositionService {
     private final ProductRepository productRepository;
     private final ProductCompositionRepository productCompositionRepository;
@@ -28,7 +32,8 @@ public class ProductCompositionService {
     }
 
     @Transactional
-    public ProductCompositionOutput add(Long productId, AddProductCompositionInput input) {
+    @Observed(name = "product.admin.add-composition")
+    public ProductCompositionOutput add(Long productId, @NonNull AddProductCompositionInput input) {
         findProductOrThrow(productId);
         findStockItemOrThrow(input.stockItemId());
 
@@ -39,6 +44,7 @@ public class ProductCompositionService {
                         input.quantity()
                 )
         );
+        log.info("Saved product composition. productCompositionId={}", saved.getId());
         return toOutput(saved);
     }
 
@@ -50,17 +56,23 @@ public class ProductCompositionService {
     }
 
     @Transactional
+    @Observed(name = "product.admin.update-composition")
     public ProductCompositionOutput update(Long productId, Long compositionId, UpdateProductCompositionInput input) {
         findProductOrThrow(productId);
         ProductComposition composition = findCompositionOrThrow(productId, compositionId);
-        return toOutput(productCompositionRepository.save(composition.withQuantity(input.quantity())));
+        var saved = productCompositionRepository.save(composition.withQuantity(input.quantity()));
+
+        log.info("Updated product composition. productCompositionId={}", saved.getId());
+        return toOutput(saved);
     }
 
     @Transactional
+    @Observed(name = "product.admin.delete-composition")
     public void delete(Long productId, Long compositionId) {
         findProductOrThrow(productId);
         ProductComposition composition = findCompositionOrThrow(productId, compositionId);
         productCompositionRepository.delete(composition);
+        log.info("Deleted product composition. productCompositionId={}", composition.getId());
     }
 
     @Transactional

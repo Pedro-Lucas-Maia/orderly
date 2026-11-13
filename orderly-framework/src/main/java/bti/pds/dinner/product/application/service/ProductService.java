@@ -8,6 +8,8 @@ import bti.pds.dinner.product.domain.ProductCompositionRepository;
 import bti.pds.dinner.product.domain.ProductId;
 import bti.pds.dinner.product.domain.ProductRepository;
 import bti.pds.dinner.product.domain.exception.ProductNotFoundException;
+import io.micrometer.observation.annotation.Observed;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +18,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Service
+@Slf4j
 public class ProductService {
     private final ProductRepository productRepository;
     private final ProductCompositionRepository productCompositionRepository;
@@ -29,10 +32,12 @@ public class ProductService {
     }
 
     @Transactional
+    @Observed(name = "product.admin.create")
     public ProductOutput create(@NonNull CreateProductInput input) {
         Product saved = productRepository.save(
                 new Product(input.name(), input.description(), input.price(), input.imageUrl(), input.active())
         );
+        log.info("product created. productId={}", saved.getId());
         return toOutput(saved);
     }
 
@@ -47,6 +52,7 @@ public class ProductService {
     }
 
     @Transactional
+    @Observed(name = "product.admin.update")
     public ProductOutput update(Long id, @NonNull UpdateProductInput input) {
         Product updated = findNotDeletedOrThrow(id).update(
                 input.name(),
@@ -54,14 +60,18 @@ public class ProductService {
                 input.price(),
                 input.active()
         );
-        return toOutput(productRepository.save(updated));
+        var saved = productRepository.save(updated);
+        log.info("product updated. productId={}", saved.getId());
+        return toOutput(saved);
     }
 
     @Transactional
+    @Observed(name = "product.admin.delete")
     public void delete(Long id) {
         Product product = findNotDeletedOrThrow(id);
         productCompositionRepository.deleteByProductId(product.getId());
         productRepository.save(product.markDeleted());
+        log.info("product marked as deleted. productId={}", product.getId());
     }
 
     private @NonNull Product findNotDeletedOrThrow(Long id) {

@@ -9,13 +9,16 @@ import bti.pds.dinner.product.domain.ProductImageRepository;
 import bti.pds.dinner.product.domain.ProductRepository;
 import bti.pds.dinner.product.domain.exception.InvalidInputException;
 import bti.pds.dinner.product.domain.exception.ProductNotFoundException;
+import io.micrometer.observation.annotation.Observed;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@Slf4j
 public class ProductImageService {
     private final ProductRepository productRepository;
     private final ProductImageRepository imageRepository;
@@ -25,14 +28,16 @@ public class ProductImageService {
         this.imageRepository = imageRepository;
     }
 
+    @Observed(name = "product.admin.upload-image")
     public ProductImageOutput uploadImage(@NonNull UploadProductImageInput input) {
         validateImageFile(input.contentType(), input.isEmpty());
         String imageUrl = imageRepository.uploadImage(input.fileBytes(), input.fileName());
-
+        log.info("Uploaded image. imageUrl={}", imageUrl);
         return new ProductImageOutput(imageUrl);
     }
 
     @Transactional
+    @Observed(name = "product.admin.update-product-image")
     public UpdateProductImageOutput updateProductImage(@NonNull UpdateProductImageInput input) {
         validateImageFile(input.contentType(), input.isEmpty());
         var product = productRepository.findById(new ProductId(input.productId()))
@@ -47,16 +52,17 @@ public class ProductImageService {
         }
 
         product = product.updateImage(imageUrl);
-
+        log.info("Updated image. productId={}, imageUrl={}", product.getId().value(), imageUrl);
         return UpdateProductImageOutput.from(productRepository.save(product));
     }
 
     @Transactional
+    @Observed(name = "product.admin.delete-product-image")
     public void deleteProductImage(@NonNull Long productId) {
         var product = productRepository.findById(new ProductId(productId))
                 .orElseThrow(() -> new ProductNotFoundException("Product with the id " + productId + " not found"));
         imageRepository.deleteImage(product.getImageUrl());
-
+        log.info("Deleted product image. productId={}", productId);
         product.updateImage("");
     }
 
