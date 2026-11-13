@@ -10,6 +10,7 @@ import bti.pds.dinner.auth.domain.UserRepository;
 import bti.pds.dinner.auth.domain.exception.InvalidPasswordException;
 import bti.pds.dinner.auth.domain.exception.RoleNotFoundException;
 import bti.pds.dinner.auth.domain.exception.UserNotFoundException;
+import io.micrometer.observation.annotation.Observed;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,6 +36,7 @@ public class ProfileService {
     }
 
     @Transactional
+    @Observed(name = "auth.user.update-profile-name")
     public UserOutput updateProfileName(@NonNull UpdateNameInput input) {
         User user = fetchUserOrThrow(input.email());
 
@@ -45,6 +47,7 @@ public class ProfileService {
     }
 
     @Transactional
+    @Observed(name = "auth.user.update-password")
     public UserOutput updateProfilePassword(@NonNull UpdatePasswordInput input) {
         User user = fetchUserOrThrow(input.email());
 
@@ -62,6 +65,7 @@ public class ProfileService {
     }
 
     @Transactional
+    @Observed(name = "auth.user.delete-profile")
     public void deleteProfile(@NonNull DeleteProfileInput input) {
         User user = fetchUserOrThrow(input.email());
 

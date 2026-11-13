@@ -9,6 +9,7 @@ import bti.pds.dinner.auth.domain.User;
 import bti.pds.dinner.auth.domain.UserRepository;
 import bti.pds.dinner.auth.domain.event.OnPasswordResetedEvent;
 import bti.pds.dinner.auth.domain.exception.TokenNotValidException;
+import io.micrometer.observation.annotation.Observed;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.ApplicationEventPublisher;
@@ -35,7 +36,7 @@ public class PasswordResetService {
         this.eventPublisher = eventPublisher;
     }
 
-    private String createPasswordResetToken(User user) {
+    private String createPasswordResetToken(@NonNull User user) {
         String token = UUID.randomUUID().toString();
 
         PasswordResetToken passwordResetToken = new PasswordResetToken(
@@ -49,6 +50,7 @@ public class PasswordResetService {
     }
 
     @Transactional
+    @Observed(name = "auth.user.initiate-password-reset")
     public void initiatePasswordReset(@NonNull InitiatePasswordResetInput input) {
         User user = userRepository.findByEmail(input.email()).orElse(null);
         if (user == null) {
@@ -69,6 +71,7 @@ public class PasswordResetService {
     }
 
     @Transactional
+    @Observed(name = "auth.user.confirm-password-reset")
     public void confirmPasswordReset(@NonNull ConfirmPasswordResetInput input) {
         PasswordResetToken passwordResetToken = passwordResetTokenRepository.findByToken(input.token())
                 .orElseThrow(() -> new TokenNotValidException("Invalid token"));

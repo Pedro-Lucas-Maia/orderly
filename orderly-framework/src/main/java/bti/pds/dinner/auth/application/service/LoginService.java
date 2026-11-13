@@ -9,6 +9,7 @@ import bti.pds.dinner.auth.domain.UserRepository;
 import bti.pds.dinner.auth.domain.exception.LoginNotValidException;
 import bti.pds.dinner.auth.domain.exception.RoleNotFoundException;
 import bti.pds.dinner.auth.domain.exception.UserNotVerifiedException;
+import io.micrometer.observation.annotation.Observed;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,6 +36,7 @@ public class LoginService {
     }
 
     @Transactional(noRollbackFor = LoginNotValidException.class) // don't roll back on ResponseStatusException to allow failed login attempts to be saved
+    @Observed(name = "auth.user.login")
     public UserOutput login(@NonNull LoginInput loginInput) {
         User user = fetchUserOrThrow(loginInput.email());
 
