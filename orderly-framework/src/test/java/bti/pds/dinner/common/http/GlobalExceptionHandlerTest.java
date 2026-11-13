@@ -1,6 +1,7 @@
 package bti.pds.dinner.common.http;
 
 import bti.pds.dinner.auth.domain.exception.LoginNotValidException;
+import bti.pds.dinner.common.exception.DataIntegrityException;
 import bti.pds.dinner.common.exception.ForbiddenAccessException;
 import bti.pds.dinner.product.domain.exception.ImageStorageException;
 import bti.pds.dinner.stock.domain.exception.InsufficientStockException;
@@ -60,6 +61,19 @@ class GlobalExceptionHandlerTest {
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertEquals(cause, exception.getCause());
+    }
+
+    @Test
+    void mapsInternalErrorToServerErrorHidingDetails() {
+        var response = handler.handleDomainException(
+                new DataIntegrityException("User has invalid roleId"),
+                request()
+        );
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(500, response.getBody().getStatus());
+        assertEquals("An unexpected internal error occurred", response.getBody().getMessage());
     }
 
     @Test
