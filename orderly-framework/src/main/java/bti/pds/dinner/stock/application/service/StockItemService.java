@@ -12,6 +12,8 @@ import bti.pds.dinner.stock.domain.*;
 import bti.pds.dinner.stock.domain.exception.MissingLotExpiryException;
 import bti.pds.dinner.stock.domain.exception.StockItemNotFoundException;
 import bti.pds.dinner.stock.domain.exception.StockNotFoundException;
+import io.micrometer.observation.annotation.Observed;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class StockItemService {
 
     private final StockRepository stockRepository;
@@ -65,7 +68,8 @@ public class StockItemService {
     }
 
     @Transactional
-    public StockItemOutput create(Long stockId, CreateStockItemInput input) {
+    @Observed(name = "stock-item.admin.create")
+    public StockItemOutput create(Long stockId, @NonNull CreateStockItemInput input) {
         stockRepository.findById(new StockId(stockId))
                 .orElseThrow(() -> new StockNotFoundException("Stock not found"));
 
@@ -84,6 +88,7 @@ public class StockItemService {
         if (saved.getCurrentQuantity() > 0) {
             createLot(saved.getId(), saved.getCurrentQuantity(), today().plusDays(initialLotDays));
         }
+        log.info("stock created. name={}, stockId={}", saved.getName(), saved.getId());
         return toOutput(saved);
     }
 
@@ -119,7 +124,8 @@ public class StockItemService {
     }
 
     @Transactional
-    public StockItemOutput update(Long id, UpdateStockItemInput input) {
+    @Observed(name = "stock-item.admin.update")
+    public StockItemOutput update(Long id, @NonNull UpdateStockItemInput input) {
         StockItem updated = findItemOrThrow(id).update(
                 input.name(),
                 input.category(),
@@ -127,18 +133,24 @@ public class StockItemService {
                 input.unitCost(),
                 input.active()
         );
-        return toOutput(stockItemRepository.save(updated));
+        var saved = stockItemRepository.save(updated);
+        log.info("stock item updated. stockItemId={}", saved.getId());
+        return toOutput(saved);
     }
 
     @Transactional
+    @Observed(name = "stock-item.admin.delete")
     public void delete(Long id) {
         StockItem item = findItemOrThrow(id);
         productCompositionRepository.deleteByStockItemId(item.getId());
         stockItemRepository.save(item.markDeleted());
+        log.info("stock item deleted. stockItemId={}", item.getId());
     }
 
     @Transactional
-    public StockItemOutput registerMovement(Long stockItemId, RegisterMovementInput input) {
+    @Observed(name = "stock-item-admin.movement")
+    public StockItemOutput registerMovement(Long stockItemId, @NonNull RegisterMovementInput input) {
+        log.info("movement registered. stockItemId={}, movementType={}", stockItemId, input.type());
         return switch (input.type()) {
             case ENTRADA -> addStock(findItemForUpdateOrThrow(stockItemId), input.quantity(), input.reason(), requireExpiry(input));
             case SAIDA, PERDA -> deductFromItem(findActiveItemForUpdateOrThrow(stockItemId), input.type(), input.quantity(), input.reason());
@@ -146,7 +158,7 @@ public class StockItemService {
         };
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public int getBalance(Long stockItemId) {
         StockItem item = findActiveItemForUpdateOrThrow(stockItemId);
         return item.getCurrentQuantity();
