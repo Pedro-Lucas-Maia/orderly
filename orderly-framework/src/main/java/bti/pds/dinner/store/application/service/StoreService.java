@@ -8,6 +8,8 @@ import bti.pds.dinner.store.domain.Store;
 import bti.pds.dinner.store.domain.StoreCapacityPolicy;
 import bti.pds.dinner.store.domain.StoreRepository;
 import bti.pds.dinner.store.domain.exception.StoreNotFoundException;
+import io.micrometer.observation.annotation.Observed;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.LocalTime;
 
+@Slf4j
 @Service
 public class StoreService {
 
@@ -41,7 +44,8 @@ public class StoreService {
     }
 
     @Transactional
-    public StoreOutput updateSettings(UpdateStoreSettingsInput input) {
+    @Observed(name = "store.admin.update-settings")
+    public StoreOutput updateSettings(@NonNull UpdateStoreSettingsInput input) {
         Store store = findStore();
         store.updateSettings(
                 input.openingTime(),
@@ -50,14 +54,18 @@ public class StoreService {
                 input.automaticPause()
         );
         refreshAutomaticStatus(store, currentTime());
-        return toOutput(storeRepository.save(store));
+        var saved = storeRepository.save(store);
+        log.info("Store settings updated. storeId={}", saved.getId());
+        return toOutput(saved);
     }
 
     @Transactional
-    public StoreOutput updateStatusManually(UpdateStoreStatusInput input) {
+    public StoreOutput updateStatusManually(@NonNull UpdateStoreStatusInput input) {
         Store store = findStore();
         store.setManualStatus(input.status());
-        return toOutput(storeRepository.save(store));
+        var saved = storeRepository.save(store);
+        log.info("Store status updated manually. storeId={}", saved.getId());
+        return toOutput(saved);
     }
 
     @Transactional
@@ -65,7 +73,9 @@ public class StoreService {
         Store store = findStore();
         store.clearManualStatus();
         refreshAutomaticStatus(store, currentTime());
-        return toOutput(storeRepository.save(store));
+        var saved = storeRepository.save(store);
+        log.info("Store status clear manually. storeId={}", saved.getId());
+        return toOutput(saved);
     }
 
     @Transactional
