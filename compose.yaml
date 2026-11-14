@@ -31,7 +31,7 @@ services:
   otel-lgtm:
     image: 'grafana/otel-lgtm:latest'
     ports:
-      - '3000:3000'   # Interface Web do Grafana (http://localhost:3000)
+      - '3001:3001'   # Interface Web do Grafana (http://localhost:3001)
       - '4317:4317'   # Receptor OTLP via gRPC
       - '4318:4318'   # Receptor OTLP via HTTP (usado pelo Spring Boot)
     environment:
