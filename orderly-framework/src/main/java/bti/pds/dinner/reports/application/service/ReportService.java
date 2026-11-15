@@ -8,6 +8,8 @@ import bti.pds.dinner.reports.application.output.StockReportOutputMapper;
 import bti.pds.dinner.reports.domain.exception.InvalidReportPeriodException;
 import bti.pds.dinner.reports.domain.sales.*;
 import bti.pds.dinner.reports.domain.stock.*;
+import io.micrometer.observation.annotation.Observed;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
+@Slf4j
 public class ReportService {
     private static final int DEFAULT_PERIOD_DAYS = 30;
 
@@ -33,6 +36,7 @@ public class ReportService {
     }
 
     @Transactional(readOnly = true)
+    @Observed(name = "reports.admin.sales")
     public SalesReportOutput generateSalesReport(ReportPeriodInput input) {
         LocalDate end = resolveEndDate(input.endDate());
         LocalDate start = resolveStartDate(input.startDate(), end);
@@ -48,10 +52,13 @@ public class ReportService {
         SalesSummary summary = salesCalculator.summarize(statusMetrics);
         List<ProductPerformance> productRanking = salesCalculator.calculateProductRanking(productMetrics);
 
+        log.info("sales report generated. startDate={}, endDate={}, totalOrders={}",
+                start, end, summary.totalOrders());
         return SalesReportOutputMapper.map(start, end, summary, statusMetrics, dailyMetrics, productRanking);
     }
 
     @Transactional(readOnly = true)
+    @Observed(name = "reports.admin.stock")
     public StockReportOutput generateStockReport(@NonNull ReportPeriodInput input) {
         LocalDate end = resolveEndDate(input.endDate());
         LocalDate start = resolveStartDate(input.startDate(), end);
@@ -69,6 +76,8 @@ public class ReportService {
         List<ItemMovementHighlight> topConsumed = stockCalculator.filterConsumedItems(itemMovements);
         List<ItemMovementHighlight> topLost = stockCalculator.filterLostItems(itemMovements);
 
+        log.info("stock report generated. startDate={}, endDate={}, activeItemsCount={}",
+                start, end, activeItems.size());
         return StockReportOutputMapper.map(start, end, valuation, valuationByCategory, movementTypes, topConsumed, topLost);
     }
 
