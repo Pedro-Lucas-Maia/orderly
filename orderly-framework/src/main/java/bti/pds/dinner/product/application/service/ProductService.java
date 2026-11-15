@@ -37,7 +37,7 @@ public class ProductService {
         Product saved = productRepository.save(
                 new Product(input.name(), input.description(), input.price(), input.imageUrl(), input.active())
         );
-        log.info("product created. productId={}", saved.getId());
+        log.info("product created. productId={}", saved.getId().value());
         return toOutput(saved);
     }
 
@@ -61,7 +61,7 @@ public class ProductService {
                 input.active()
         );
         var saved = productRepository.save(updated);
-        log.info("product updated. productId={}", saved.getId());
+        log.info("product updated. productId={}", saved.getId().value());
         return toOutput(saved);
     }
 
@@ -71,14 +71,14 @@ public class ProductService {
         Product product = findNotDeletedOrThrow(id);
         productCompositionRepository.deleteByProductId(product.getId());
         productRepository.save(product.markDeleted());
-        log.info("product marked as deleted. productId={}", product.getId());
+        log.info("product marked as deleted. productId={}", product.getId().value());
     }
 
     private @NonNull Product findNotDeletedOrThrow(Long id) {
         Product product = productRepository.findById(new ProductId(id))
-                .orElseThrow(() -> new ProductNotFoundException("Product not found"));
+                .orElseThrow(() -> new ProductNotFoundException("Product not found: " + id));
         if (product.isDeleted()) {
-            throw new ProductNotFoundException("Product not found");
+            throw new ProductNotFoundException("Product not found: " + id);
         }
         return product;
     }
