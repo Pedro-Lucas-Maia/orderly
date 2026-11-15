@@ -58,8 +58,8 @@ public class ProfileService {
             throw new InvalidPasswordException("New password cannot be the same");
         }
 
-      log.info("User password updated successfully. userId={}", user.getId().uuid());
         userRepository.save(user.updatePassword(passwordEncoder.encode(input.newPassword())));
+        log.info("User password updated successfully. userId={}", user.getId().uuid());
 
         return toUserOutput(user);
     }
@@ -72,8 +72,8 @@ public class ProfileService {
         if (!passwordEncoder.matches(input.password(), user.getPassword())) {
             throw new InvalidPasswordException("Password is incorrect");
         }
-        log.info("User profile deleted successfully. userId={}", user.getId().uuid());
         userRepository.delete(user);
+        log.info("User profile deleted successfully. userId={}", user.getId().uuid());
     }
 
     private @NonNull User fetchUserOrThrow(String email) {
