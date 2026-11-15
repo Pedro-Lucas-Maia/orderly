@@ -37,17 +37,17 @@ public class SaleStatusService {
 
         sale.confirm();
         var savedSale = saleRepository.save(sale);
-        log.info("sale started preparing. userId={}, saleId={}", savedSale.getUserId(), savedSale.getId());
+        log.info("sale started preparing. userId={}, saleId={}", savedSale.getUserId().uuid(), savedSale.getId().uuid());
         return SaleOutput.from(savedSale);
     }
 
     @Transactional
-    @Observed(name = "sales.admin.distach-sale")
+    @Observed(name = "sales.admin.dispatch-sale")
     public SaleOutput dispatchDelivery(String saleId) {
         Sale sale = findSale(saleId);
         sale.dispatch();
         var savedSale = saleRepository.save(sale);
-        log.info("sale dispatched. userId={}, saleId={}", savedSale.getUserId(), savedSale.getId());
+        log.info("sale dispatched. userId={}, saleId={}", savedSale.getUserId().uuid(), savedSale.getId().uuid());
         return SaleOutput.from(savedSale);
     }
 
@@ -60,7 +60,7 @@ public class SaleStatusService {
         }
         sale.deliver();
         var savedSale = saleRepository.save(sale);
-        log.info("sale delivered. userId={}, saleId={}", savedSale.getUserId(), savedSale.getId());
+        log.info("sale delivered. userId={}, saleId={}", savedSale.getUserId().uuid(), savedSale.getId().uuid());
         return SaleOutput.from(savedSale);
     }
     private boolean isNotARequestFromAdmin(boolean isRequestFromAdmin) {
@@ -74,14 +74,15 @@ public class SaleStatusService {
         SaleStatus statusBeforeCancel = sale.getStatus();
 
         sale.cancel(saleConsumptionStrategy);
-
-        if (saleConsumptionStrategy.shouldRestoreOnCancellation(statusBeforeCancel)) {
+        boolean shouldRestore = saleConsumptionStrategy.shouldRestoreOnCancellation(statusBeforeCancel);
+        if (shouldRestore) {
             Map<Long, Integer> totalToReturn = calculateConsumptionFromSale(sale);
             restoreStock(totalToReturn, "Cancel sale #" + saleIdStr);
         }
 
         saleRepository.save(sale);
-        log.warn("sale canceled. userId={}, saleId={}", sale.getUserId(), sale.getId());
+        log.warn("sale canceled. userId={}, saleId={}, previousStatus={}, stockRestored={}",
+                sale.getUserId().uuid(), sale.getId().uuid(), statusBeforeCancel, shouldRestore);
     }
 
     private void checkAuthorization(@NonNull UUID databaseId, UUID inputId) {
