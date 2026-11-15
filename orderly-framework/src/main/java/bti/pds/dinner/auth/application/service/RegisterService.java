@@ -7,7 +7,7 @@ import bti.pds.dinner.auth.domain.event.OnUserRegisteredEvent;
 import bti.pds.dinner.auth.domain.exception.CpfNotValidException;
 import bti.pds.dinner.auth.domain.exception.EmailNotValidException;
 import bti.pds.dinner.auth.domain.exception.RoleNotFoundException;
-import bti.pds.dinner.auth.domain.exception.UserNotFoundException;
+import bti.pds.dinner.common.exception.DataIntegrityException;
 import io.micrometer.observation.annotation.Observed;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
@@ -91,26 +91,20 @@ public class RegisterService {
     }
 
     @Transactional
-    @Observed(name = "auth.user.verify_token")
+    @Observed(name = "auth.user.verify-token")
     public UserOutput verifyToken(String token) {
         UUID userId = accountVerificationService.verifyToken(token);
         User user = userRepository.findById(new UserId(userId))
-                .orElseThrow(() -> {
-                    log.error("Data inconsistency: Valid verification token points to non-existent user. userId={}", userId);
-                    return new UserNotFoundException("User not found after token verification");
-                });
+                .orElseThrow(() ->
+                        new DataIntegrityException("Data inconsistency: Valid verification token points to non-existent user. userId=" + userId));
 
         var enabledUser = user.enable();
         User savedUser = userRepository.save(enabledUser);
         var role = roleRepository.findById(savedUser.getRoleId())
-                .orElseThrow(() -> {
-                    log.error("Data inconsistency: User assigned to non-existent role. userId={}, roleId={}",
-                            savedUser.getId().uuid(), savedUser.getRoleId().uuid());
-                    return new RoleNotFoundException("Role with the id " + savedUser.getRoleId().uuid() + " not found");
-                });
+                .orElseThrow(() ->
+                        new RoleNotFoundException("Role with the id " + savedUser.getRoleId().uuid() + " not found"));
 
         log.info("User account verified and enabled. userId={}, role={}", user.getId().uuid(), role.getName());
-
         return new UserOutput(savedUser.getId().uuid(), savedUser.getName(), savedUser.getEmail(), role.getName());
     }
 
