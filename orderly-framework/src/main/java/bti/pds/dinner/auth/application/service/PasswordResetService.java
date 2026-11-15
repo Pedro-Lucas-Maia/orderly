@@ -3,10 +3,7 @@ package bti.pds.dinner.auth.application.service;
 import bti.pds.dinner.auth.application.input.ConfirmPasswordResetInput;
 import bti.pds.dinner.auth.application.input.InitiatePasswordResetInput;
 import bti.pds.dinner.auth.application.input.VerifyPasswordResetTokenInput;
-import bti.pds.dinner.auth.domain.PasswordResetToken;
-import bti.pds.dinner.auth.domain.PasswordResetTokenRepository;
-import bti.pds.dinner.auth.domain.User;
-import bti.pds.dinner.auth.domain.UserRepository;
+import bti.pds.dinner.auth.domain.*;
 import bti.pds.dinner.auth.domain.event.OnPasswordResetedEvent;
 import bti.pds.dinner.auth.domain.exception.TokenNotValidException;
 import io.micrometer.observation.annotation.Observed;
@@ -54,6 +51,7 @@ public class PasswordResetService {
     public void initiatePasswordReset(@NonNull InitiatePasswordResetInput input) {
         User user = userRepository.findByEmail(input.email()).orElse(null);
         if (user == null) {
+            log.debug("No user found with email {}", LogMaskUtils.maskEmail(input.email()));
             return;
         }
 
