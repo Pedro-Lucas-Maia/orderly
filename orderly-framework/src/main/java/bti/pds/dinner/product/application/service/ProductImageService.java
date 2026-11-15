@@ -62,8 +62,9 @@ public class ProductImageService {
         var product = productRepository.findById(new ProductId(productId))
                 .orElseThrow(() -> new ProductNotFoundException("Product with the id " + productId + " not found"));
         imageRepository.deleteImage(product.getImageUrl());
-        log.info("Deleted product image. productId={}", productId);
-        product.updateImage("");
+        var updated = product.updateImage("");
+        var saved = productRepository.save(updated);
+        log.info("Deleted product image. productId={}", saved.getId().value());
     }
 
     private void validateImageFile(String contentType, boolean isEmpty) {
