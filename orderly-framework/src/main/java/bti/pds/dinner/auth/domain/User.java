@@ -53,10 +53,9 @@ public class User {
                 this.locked = false;
                 this.failedLoginAttempts = 0;
                 this.lockoutMoment = null;
-
                 return this;
             } else {
-                throw new UserLockedException("user with email " + this.getEmail() + " is locked, please wait");
+                throw new UserLockedException("user with email " + LogMaskUtils.maskEmail(this.getEmail()) + " is locked, please wait");
             }
         }
         return this;
