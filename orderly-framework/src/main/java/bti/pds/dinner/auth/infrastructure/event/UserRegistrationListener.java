@@ -28,7 +28,7 @@ public class UserRegistrationListener {
             mailService.sendVerificationEmail(event.user(), event.token());
         } catch (Exception e) {
             log.error("Async event processing failed: could not send verification email. event=OnUserRegisteredEvent, userId={}",
-                    event.user().getId().uuid(), e);
+                    userId, e);
         }
 
     }
