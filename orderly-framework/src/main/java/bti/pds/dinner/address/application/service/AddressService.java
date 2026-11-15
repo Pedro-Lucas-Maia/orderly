@@ -58,8 +58,7 @@ public class AddressService {
         var address = repository.findById(new AddressId(input.addressId()))
                 .orElseThrow(() -> new AddressNotFoundException("Address with id " +  input.addressId() + " not found"));
         if (address.getUserId().uuid().equals(input.userId())) {
-            log.info("Updated user address successfully. userId={}", input.userId());
-            return AddressOutput.from(address.updateAddress(
+            var updatedAddress = address.updateAddress(
                     input.name(),
                     input.street(),
                     input.number(),
@@ -67,7 +66,10 @@ public class AddressService {
                     input.neighborhood(),
                     input.city(),
                     input.state(),
-                    input.zipCode()));
+                    input.zipCode());
+            var savedAddress = repository.save(updatedAddress);
+            log.info("Updated user address successfully. userId={}, addressId={}", savedAddress.getUserId(), savedAddress.getAddressId());
+            return AddressOutput.from(savedAddress);
         }
         throw new ForbiddenAccessException("Access denied for the requested resource");
     }
