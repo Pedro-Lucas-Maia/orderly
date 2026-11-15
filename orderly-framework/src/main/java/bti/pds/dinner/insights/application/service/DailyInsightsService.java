@@ -3,6 +3,8 @@ package bti.pds.dinner.insights.application.service;
 import bti.pds.dinner.insights.application.output.DailyInsightsOutput;
 import bti.pds.dinner.insights.domain.*;
 import bti.pds.dinner.store.domain.exception.StoreNotFoundException;
+import io.micrometer.observation.annotation.Observed;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -14,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
+@Slf4j
 public class DailyInsightsService {
 
     public static final String STOCK_SCOPE_GLOBAL = "GLOBAL_SHARED";
@@ -55,10 +58,18 @@ public class DailyInsightsService {
     }
 
     @Transactional(readOnly = true)
+    @Observed(name = "insights.admin.daily")
     public DailyInsightsOutput getDailyInsights(LocalDate date, Integer expiryWindowDays, Integer horizonDays) {
         StoreCatalog.StoreRef store = storeCatalog.getDefaultStore()
                 .orElseThrow(StoreNotFoundException::new);
-        return build(store.id(), store.name(), storeNote(), date, expiryWindowDays, horizonDays);
+        var output = build(store.id(), store.name(), storeNote(), date, expiryWindowDays, horizonDays);
+        log.info("daily insights generated. storeId={}, targetDate={}, criticalItemsCount={}, expiringLotsCount={}, purchaseSuggestCount={}",
+                output.storeId(),
+                output.targetDate(),
+                output.criticalStock().size(),
+                output.expiringLots().size(),
+                output.purchaseSuggestions().size());
+        return output;
     }
 
     private @NonNull DailyInsightsOutput build(

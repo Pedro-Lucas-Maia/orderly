@@ -3,12 +3,15 @@ package bti.pds.dinner.auth.application.service;
 
 import bti.pds.dinner.auth.application.input.LoginInput;
 import bti.pds.dinner.auth.application.output.UserOutput;
+import bti.pds.dinner.auth.domain.LogMaskUtils;
 import bti.pds.dinner.auth.domain.RoleRepository;
 import bti.pds.dinner.auth.domain.User;
 import bti.pds.dinner.auth.domain.UserRepository;
 import bti.pds.dinner.auth.domain.exception.LoginNotValidException;
 import bti.pds.dinner.auth.domain.exception.RoleNotFoundException;
 import bti.pds.dinner.auth.domain.exception.UserNotVerifiedException;
+import io.micrometer.observation.annotation.Observed;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,6 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 
 
+@Slf4j
 @Service
 public class LoginService {
     private static final int MAX_FAILED_ATTEMPTS = 10;
@@ -33,6 +37,7 @@ public class LoginService {
     }
 
     @Transactional(noRollbackFor = LoginNotValidException.class) // don't roll back on ResponseStatusException to allow failed login attempts to be saved
+    @Observed(name = "auth.user.login")
     public UserOutput login(@NonNull LoginInput loginInput) {
         User user = fetchUserOrThrow(loginInput.email());
 
@@ -40,13 +45,15 @@ public class LoginService {
         if (!isPasswordValid(user, loginInput.password())) {
             handleFailedAttempt(user);
         }
-
+        boolean wasUserLocked = user.isLocked();
         var notLockedUser = user.verifyUserNotLocked(LocalDateTime.now(), MINUTES_OF_LOCKOUT);
-
-        if(!notLockedUser.isEnabled()) {
-            throw new UserNotVerifiedException("user with the email " +  user.getEmail() + " not verified, please check your email");
+        if (wasUserLocked) {
+            log.info("user unlocked after timeout. userId={}", notLockedUser.getId().uuid());
         }
 
+        if(!notLockedUser.isEnabled()) {
+            throw new UserNotVerifiedException("user with the email " + LogMaskUtils.maskEmail(user.getEmail()) + " not verified, please check your email");
+        }
         return handleSuccessfulLogin(notLockedUser);
     }
 
@@ -63,7 +70,10 @@ public class LoginService {
     }
 
     private void handleFailedAttempt(@NonNull User user) throws ResponseStatusException {
-        userRepository.save(user.failedLoginAttempt(MAX_FAILED_ATTEMPTS));
+        var updatedUser = userRepository.save(user.failedLoginAttempt(MAX_FAILED_ATTEMPTS));
+        if (updatedUser.isLocked()) {
+            log.warn("User locked from too many attempts. userId={}", user.getId().uuid());
+        }
         throw new LoginNotValidException("Invalid e-mail or password");
     }
 
@@ -71,6 +81,7 @@ public class LoginService {
         User savedUser = userRepository.save(user.successfulLogin());
         var role = roleRepository.findById(user.getRoleId())
                 .orElseThrow(() -> new RoleNotFoundException("role of user " + user.getName() + " not found"));
+        log.info("User logged in successfully. userId={}, role={}", user.getId().uuid(), role.getName());
         return new UserOutput(savedUser.getId().uuid(), savedUser.getName(), savedUser.getEmail(), role.getName());
     }
 }

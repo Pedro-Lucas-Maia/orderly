@@ -5,11 +5,14 @@ import bti.pds.dinner.shoppingCart.application.input.DeleteItemInput;
 import bti.pds.dinner.shoppingCart.application.input.UpdateItemQuantityInput;
 import bti.pds.dinner.shoppingCart.application.output.CartOutput;
 import bti.pds.dinner.shoppingCart.domain.*;
+import io.micrometer.observation.annotation.Observed;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 
+@Slf4j
 @Service
 public class ShoppingCartService {
     private final ShoppingCartRepository cartRepository;
@@ -20,6 +23,7 @@ public class ShoppingCartService {
         this.productRepository = productRepository;
     }
 
+    @Observed(name = "shopping-cart.user.add")
     public CartOutput addItem(@NonNull AddItemInput input) {
         var product = productRepository.findById(input.productId());
 
@@ -33,32 +37,42 @@ public class ShoppingCartService {
         var cart = findCart(input.id());
 
         cart.addItem(newItem);
-
-        return CartOutput.from(cartRepository.save(cart));
+        var savedCart = cartRepository.save(cart);
+        log.info("item added to the cart. userId={}, productId={}, cartId={}", savedCart.getId(), product.getProductId(), savedCart.getId());
+        return CartOutput.from(savedCart);
     }
 
     public CartOutput getCart(String id) {
         return CartOutput.from(findCart(id));
     }
 
+    @Observed(name = "shopping-cart.user.delete-item")
     public CartOutput deleteItem(@NonNull DeleteItemInput input) {
         var cart = findCart(input.id());
         cart.deleteItem(input.productId());
-        return CartOutput.from(cartRepository.save(cart));
+        var savedCart = cartRepository.save(cart);
+        log.info("Item removed. userId={}, productId={}, cartId={}", savedCart.getId(), input.productId(), savedCart.getId());
+        return CartOutput.from(savedCart);
     }
 
+    @Observed(name = "shopping-cart.user.update")
     public CartOutput updateItemQuantity(@NonNull UpdateItemQuantityInput input) {
         var cart = findCart(input.id());
         cart.updateItemQuantity(input.productId(), input.quantity());
-        return CartOutput.from(cartRepository.save(cart));
+        var savedCart = cartRepository.save(cart);
+        log.info("Item updated. userId={}, productId={}, cartId={}", savedCart.getId(), input.productId(), savedCart.getId());
+        return CartOutput.from(savedCart);
     }
 
+    @Observed(name = "shopping-cart.user.clear")
     public CartOutput clearCart(String id) {
         var cart = findCart(id);
 
         if(cart.getItems().isEmpty()) return CartOutput.from(cart);
 
-        return CartOutput.from(cartRepository.save(cart.clearCart()));
+        var savedCart = cartRepository.save(cart.clearCart());
+        log.info("Cart cleared. userId={}, cartId={}", savedCart.getId(), id);
+        return CartOutput.from(savedCart);
     }
 
     private ShoppingCart findCart(String id) {

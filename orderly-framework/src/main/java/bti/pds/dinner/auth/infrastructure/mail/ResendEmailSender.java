@@ -4,25 +4,23 @@ import bti.pds.dinner.auth.domain.exception.EmailDeliveryException;
 import com.resend.Resend;
 import com.resend.services.emails.model.CreateEmailOptions;
 import com.resend.services.emails.model.CreateEmailResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.micrometer.observation.annotation.Observed;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 public class ResendEmailSender implements EmailSender {
-    private static final Logger log = LoggerFactory.getLogger(ResendEmailSender.class);
-    private final String apiKey;
+    private final Resend resend;
 
     public ResendEmailSender(@Value("${resend.api.key}") String apiKey) {
-        this.apiKey = apiKey;
+        this.resend = new Resend(apiKey);
     }
 
     @Override
+    @Observed(name = "infrastructure.mail.resend")
     public void sendEmail(String to, String subject, String content) {
-
-        Resend resend = new Resend(apiKey);
-
         CreateEmailOptions params = CreateEmailOptions.builder()
                 .from("Acme <onboarding@resend.dev>")
                 .to(to)
@@ -31,7 +29,7 @@ public class ResendEmailSender implements EmailSender {
                 .build();
         try {
             CreateEmailResponse data = resend.emails().send(params);
-            log.info("Resend email sent to: {}, with {}", to, data);
+            log.debug("Email dispatched to external provider. provider=Resend, externalMessageId={}", data.getId());
         } catch (Exception e) {
             throw new EmailDeliveryException("Failed to communicate with resend API", e);
         }

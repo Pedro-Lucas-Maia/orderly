@@ -10,10 +10,14 @@ import bti.pds.dinner.auth.domain.UserRepository;
 import bti.pds.dinner.auth.domain.exception.InvalidPasswordException;
 import bti.pds.dinner.auth.domain.exception.RoleNotFoundException;
 import bti.pds.dinner.auth.domain.exception.UserNotFoundException;
+import io.micrometer.observation.annotation.Observed;
+import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 public class ProfileService {
     private final UserRepository userRepository;
@@ -32,16 +36,19 @@ public class ProfileService {
     }
 
     @Transactional
-    public UserOutput updateProfileName(UpdateNameInput input) {
+    @Observed(name = "auth.user.update-profile-name")
+    public UserOutput updateProfileName(@NonNull UpdateNameInput input) {
         User user = fetchUserOrThrow(input.email());
 
         userRepository.save(user.updateName(input.name()));
+        log.info("User profile name updated successfully. userId={}", user.getId().uuid());
 
         return toUserOutput(user);
     }
 
     @Transactional
-    public UserOutput updateProfilePassword(UpdatePasswordInput input) {
+    @Observed(name = "auth.user.update-password")
+    public UserOutput updateProfilePassword(@NonNull UpdatePasswordInput input) {
         User user = fetchUserOrThrow(input.email());
 
         if (!passwordEncoder.matches(input.currentPassword(), user.getPassword())) {
@@ -52,26 +59,28 @@ public class ProfileService {
         }
 
         userRepository.save(user.updatePassword(passwordEncoder.encode(input.newPassword())));
+        log.info("User password updated successfully. userId={}", user.getId().uuid());
 
         return toUserOutput(user);
     }
 
     @Transactional
-    public void deleteProfile(DeleteProfileInput input) {
+    @Observed(name = "auth.user.delete-profile")
+    public void deleteProfile(@NonNull DeleteProfileInput input) {
         User user = fetchUserOrThrow(input.email());
 
         if (!passwordEncoder.matches(input.password(), user.getPassword())) {
             throw new InvalidPasswordException("Password is incorrect");
         }
-
         userRepository.delete(user);
+        log.info("User profile deleted successfully. userId={}", user.getId().uuid());
     }
 
-    private User fetchUserOrThrow(String email) {
+    private @NonNull User fetchUserOrThrow(String email) {
         return userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException("User not found"));
     }
 
-    private UserOutput toUserOutput(User user) {
+    private @NonNull UserOutput toUserOutput(@NonNull User user) {
         var role = roleRepository.findById(user.getRoleId())
                 .orElseThrow(() -> new RoleNotFoundException("role of user " + user.getName() + " not found"));
         return new UserOutput(user.getId().uuid(), user.getName(), user.getEmail(), role.getName());

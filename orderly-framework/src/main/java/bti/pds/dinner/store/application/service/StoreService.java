@@ -8,6 +8,8 @@ import bti.pds.dinner.store.domain.Store;
 import bti.pds.dinner.store.domain.StoreCapacityPolicy;
 import bti.pds.dinner.store.domain.StoreRepository;
 import bti.pds.dinner.store.domain.exception.StoreNotFoundException;
+import io.micrometer.observation.annotation.Observed;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.LocalTime;
 
+@Slf4j
 @Service
 public class StoreService {
 
@@ -41,7 +44,8 @@ public class StoreService {
     }
 
     @Transactional
-    public StoreOutput updateSettings(UpdateStoreSettingsInput input) {
+    @Observed(name = "store.admin.update-settings")
+    public StoreOutput updateSettings(@NonNull UpdateStoreSettingsInput input) {
         Store store = findStore();
         store.updateSettings(
                 input.openingTime(),
@@ -50,33 +54,51 @@ public class StoreService {
                 input.automaticPause()
         );
         refreshAutomaticStatus(store, currentTime());
-        return toOutput(storeRepository.save(store));
+        var saved = storeRepository.save(store);
+        log.info("Store settings updated. storeId={}", saved.getId());
+        return toOutput(saved);
     }
 
     @Transactional
-    public StoreOutput updateStatusManually(UpdateStoreStatusInput input) {
+    @Observed(name = "store.admin.update-status-manually")
+    public StoreOutput updateStatusManually(@NonNull UpdateStoreStatusInput input) {
         Store store = findStore();
+        var oldStatus = store.getStatus();
         store.setManualStatus(input.status());
-        return toOutput(storeRepository.save(store));
+        var saved = storeRepository.save(store);
+        log.info("store status updated manually. storeId={}, oldStatus={}, newStatus={}",
+                saved.getId(), oldStatus, saved.getStatus());
+        return toOutput(saved);
     }
 
     @Transactional
+    @Observed(name = "store.admin.clear-manual-status")
     public StoreOutput clearManualStatus() {
         Store store = findStore();
+        var oldStatus = store.getStatus();
         store.clearManualStatus();
         refreshAutomaticStatus(store, currentTime());
-        return toOutput(storeRepository.save(store));
+        var saved = storeRepository.save(store);
+        log.info("store status clear manually. storeId={}, oldStatus={}, newStatus={}",
+                saved.getId(), oldStatus, saved.getStatus());
+        return toOutput(saved);
     }
 
     @Transactional
     public void refreshAutomaticStatuses(LocalTime currentTime) {
         Store store = findStore();
-        store.refreshAutomaticStatus(
+        var oldStatus = store.getStatus();
+        int ordersInProgress = ordersInProgressCounter.countOrdersInProgress();
+        boolean statusChanged = store.refreshAutomaticStatus(
                 currentTime,
-                ordersInProgressCounter.countOrdersInProgress(),
+                ordersInProgress,
                 storeCapacityPolicy
         );
-        storeRepository.save(store);
+        if (statusChanged) {
+            var savedStore = storeRepository.save(store);
+            log.info("store status changed automatically. storeId={}, oldStatus={}, newStatus={}, ordersInProgress={}",
+                    savedStore.getId(), oldStatus, savedStore.getStatus(), ordersInProgress);
+        }
     }
 
     private void refreshAutomaticStatus(Store store, LocalTime currentTime) {

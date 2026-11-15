@@ -32,7 +32,10 @@ public class GlobalExceptionHandler {
             @NonNull HttpServletRequest request
     ) {
         HttpStatus status = mapCategoryToStatus(ex.getCategory());
-        return buildAndLogResponse(status, ex.getErrorTitle(), ex.getMessage(), request.getRequestURI(), ex);
+        String clientMessage = status.is5xxServerError()
+                ? "An unexpected internal error occurred"
+                : ex.getMessage();
+        return buildAndLogResponse(status, ex.getErrorTitle(), clientMessage, request.getRequestURI(), ex);
     }
 
     // Captura validações de entidades de domínio que ainda lançam IllegalArgumentException

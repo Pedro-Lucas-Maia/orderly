@@ -5,6 +5,7 @@ import bti.pds.dinner.product.domain.exception.ImageStorageException;
 import bti.pds.dinner.product.domain.exception.UrlNotValidException;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import io.micrometer.observation.annotation.Observed;
 import org.springframework.stereotype.Repository;
 
 import java.io.IOException;
@@ -19,6 +20,7 @@ public class CloudinaryImageRepository implements ProductImageRepository {
     }
 
     @Override
+    @Observed(name = "infrastructure.image.cloudinary.upload")
     public String uploadImage(byte[] fileBytes, String fileName) {
         try {
             Map uploadResult = cloudinary.uploader().upload(fileBytes, ObjectUtils.emptyMap());
@@ -30,6 +32,7 @@ public class CloudinaryImageRepository implements ProductImageRepository {
     }
 
     @Override
+    @Observed(name = "infrastructure.image.cloudinary.delete")
     public void deleteImage(String imageUrl) {
         try {
             String publicId = extractPublicIdFromUrl(imageUrl);
@@ -41,6 +44,7 @@ public class CloudinaryImageRepository implements ProductImageRepository {
     }
 
     @Override
+    @Observed(name = "infrastructure.image.cloudinary.replace")
     public String replace(byte[] fileBytes, String fileName, String oldImageUrl) {
         try {
             String publicId = extractPublicIdFromUrl(oldImageUrl);
