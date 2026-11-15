@@ -60,33 +60,45 @@ public class StoreService {
     }
 
     @Transactional
+    @Observed(name = "store.admin.update-status-manually")
     public StoreOutput updateStatusManually(@NonNull UpdateStoreStatusInput input) {
         Store store = findStore();
+        var oldStatus = store.getStatus();
         store.setManualStatus(input.status());
         var saved = storeRepository.save(store);
-        log.info("Store status updated manually. storeId={}", saved.getId());
+        log.info("store status updated manually. storeId={}, oldStatus={}, newStatus={}",
+                saved.getId(), oldStatus, saved.getStatus());
         return toOutput(saved);
     }
 
     @Transactional
+    @Observed(name = "store.admin.clear-manual-status")
     public StoreOutput clearManualStatus() {
         Store store = findStore();
+        var oldStatus = store.getStatus();
         store.clearManualStatus();
         refreshAutomaticStatus(store, currentTime());
         var saved = storeRepository.save(store);
-        log.info("Store status clear manually. storeId={}", saved.getId());
+        log.info("store status clear manually. storeId={}, oldStatus={}, newStatus={}",
+                saved.getId(), oldStatus, saved.getStatus());
         return toOutput(saved);
     }
 
     @Transactional
     public void refreshAutomaticStatuses(LocalTime currentTime) {
         Store store = findStore();
-        store.refreshAutomaticStatus(
+        var oldStatus = store.getStatus();
+        int ordersInProgress = ordersInProgressCounter.countOrdersInProgress();
+        boolean statusChanged = store.refreshAutomaticStatus(
                 currentTime,
-                ordersInProgressCounter.countOrdersInProgress(),
+                ordersInProgress,
                 storeCapacityPolicy
         );
-        storeRepository.save(store);
+        if (statusChanged) {
+            var savedStore = storeRepository.save(store);
+            log.info("store status changed automatically. storeId={}, oldStatus={}, newStatus={}, ordersInProgress={}",
+                    savedStore.getId(), oldStatus, savedStore.getStatus(), ordersInProgress);
+        }
     }
 
     private void refreshAutomaticStatus(Store store, LocalTime currentTime) {
