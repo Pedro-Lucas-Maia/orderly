@@ -88,7 +88,7 @@ public class StockItemService {
         if (saved.getCurrentQuantity() > 0) {
             createLot(saved.getId(), saved.getCurrentQuantity(), today().plusDays(initialLotDays));
         }
-        log.info("stock created. name={}, stockId={}", saved.getName(), saved.getId());
+        log.info("stock item created. name={}, stockItemId={}", saved.getName(), saved.getId().value());
         return toOutput(saved);
     }
 
@@ -134,7 +134,7 @@ public class StockItemService {
                 input.active()
         );
         var saved = stockItemRepository.save(updated);
-        log.info("stock item updated. stockItemId={}", saved.getId());
+        log.info("stock item updated. stockItemId={}", saved.getId().value());
         return toOutput(saved);
     }
 
@@ -144,18 +144,19 @@ public class StockItemService {
         StockItem item = findItemOrThrow(id);
         productCompositionRepository.deleteByStockItemId(item.getId());
         stockItemRepository.save(item.markDeleted());
-        log.info("stock item deleted. stockItemId={}", item.getId());
+        log.info("stock item deleted. stockItemId={}", item.getId().value());
     }
 
     @Transactional
-    @Observed(name = "stock-item-admin.movement")
+    @Observed(name = "stock-item.admin.movement")
     public StockItemOutput registerMovement(Long stockItemId, @NonNull RegisterMovementInput input) {
-        log.info("movement registered. stockItemId={}, movementType={}", stockItemId, input.type());
-        return switch (input.type()) {
+        var updated = switch (input.type()) {
             case ENTRADA -> addStock(findItemForUpdateOrThrow(stockItemId), input.quantity(), input.reason(), requireExpiry(input));
             case SAIDA, PERDA -> deductFromItem(findActiveItemForUpdateOrThrow(stockItemId), input.type(), input.quantity(), input.reason());
             case AJUSTE -> applyAdjustment(findItemForUpdateOrThrow(stockItemId), input.quantity(), input.reason());
         };
+        log.info("movement registered. stockItemId={}, movementType={}", updated.id(), input.type());
+        return updated;
     }
 
     @Transactional(readOnly = true)
@@ -166,17 +167,21 @@ public class StockItemService {
 
     @Transactional
     public void deductStock(Long stockItemId, int quantity, String reason) {
-        deductFromItem(findActiveItemForUpdateOrThrow(stockItemId), MovementType.SAIDA, quantity, reason);
+        var updated = deductFromItem(findActiveItemForUpdateOrThrow(stockItemId), MovementType.SAIDA, quantity, reason);
+        log.info("stock deducted automatically. stockItemId={}, deductedQuantity={}, newBalance={}, reason={}",
+                stockItemId, quantity, updated.currentQuantity(), reason);
     }
 
     @Transactional
     public void addStock(Long stockItemId, int quantity, String reason) {
-        addStock(
+        var updated = addStock(
                 findItemForUpdateOrThrow(stockItemId),
                 quantity,
                 reason,
                 today().plusDays(reversalLotDays)
         );
+        log.info("stock restored automatically. stockItemId={}, addedQuantity={}, newBalance={}, reason={}",
+                stockItemId, quantity, updated.currentQuantity(), reason);
     }
 
     private StockItemOutput addStock(StockItem item, int quantity, String reason, LocalDate expiresAt) {
