@@ -27,7 +27,7 @@ public class AccountVerificationService {
     public String createVerificationToken(@NonNull User user) {
         String token = UUID.randomUUID().toString();
         VerificationToken newToken = new VerificationToken(token, user.getId(), LocalDateTime.now().plusHours(HOURS_TO_VERIFY));
-        log.info("New verification token created successfully. userId={}", user.getId());
+        log.info("New verification token created successfully. userId={}", user.getId().uuid());
         return verificationTokenRepository.save(newToken).getToken();
     }
 
