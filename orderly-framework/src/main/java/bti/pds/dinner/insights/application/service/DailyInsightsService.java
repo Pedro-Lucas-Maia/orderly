@@ -13,7 +13,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -28,6 +33,7 @@ public class DailyInsightsService {
     private final RecipeCatalog recipeCatalog;
     private final StockSnapshot stockSnapshot;
     private final DemandForecastStrategy demandForecastStrategy;
+    private final CriticalLotActionStrategy criticalLotActionStrategy;
     private final Clock clock;
     private final int forecastWeeks;
     private final int defaultExpiryWindowDays;
@@ -40,6 +46,7 @@ public class DailyInsightsService {
             RecipeCatalog recipeCatalog,
             StockSnapshot stockSnapshot,
             DemandForecastStrategy demandForecastStrategy,
+            CriticalLotActionStrategy criticalLotActionStrategy,
             Clock clock,
             @Value("${app.insights.forecast-weeks:8}") int forecastWeeks,
             @Value("${app.insights.expiry-window-days:3}") int defaultExpiryWindowDays,
@@ -51,6 +58,7 @@ public class DailyInsightsService {
         this.recipeCatalog = recipeCatalog;
         this.stockSnapshot = stockSnapshot;
         this.demandForecastStrategy = demandForecastStrategy;
+        this.criticalLotActionStrategy = criticalLotActionStrategy;
         this.clock = clock;
         this.forecastWeeks = forecastWeeks;
         this.defaultExpiryWindowDays = defaultExpiryWindowDays;
@@ -100,7 +108,39 @@ public class DailyInsightsService {
 
         var purchases = PurchaseSuggestionCalculator.suggest(demand, recipes, items, horizon);
         var critical = CriticalStockCalculator.find(items, recipes);
-        var expiry = ExpiryPromotionCalculator.calculate(targetDate, expiryWindow, lots, items, recipes, demand);
+
+        LocalDate deadline = targetDate.plusDays(expiryWindow);
+        Map<Long, StockItemSnapshot> itemsById = items.stream()
+                .collect(Collectors.toMap(StockItemSnapshot::id, Function.identity()));
+
+        List<DailyInsightsOutput.ExpiringLot> expiringLots = lots.stream()
+                .filter(lot -> lot.quantity() > 0)
+                .filter(lot -> !lot.expiresAt().isAfter(deadline))
+                .sorted(Comparator.comparing(StockLotSnapshot::expiresAt).thenComparing(StockLotSnapshot::lotId))
+                .map(lot -> {
+                    StockItemSnapshot item = itemsById.get(lot.stockItemId());
+                    String itemName = item == null ? ("Item " + lot.stockItemId()) : item.name();
+                    long daysUntilExpiry = ChronoUnit.DAYS.between(targetDate, lot.expiresAt());
+                    return new DailyInsightsOutput.ExpiringLot(
+                            lot.lotId(), lot.stockItemId(), itemName, lot.quantity(), lot.expiresAt(), daysUntilExpiry
+                    );
+                })
+                .toList();
+
+        List<InventoryAction> actions = criticalLotActionStrategy.evaluateExpiringLots(
+                lots, items, recipes, demand, targetDate
+        );
+
+        List<DailyInsightsOutput.PromotionSuggestion> promotionSuggestions = actions.stream()
+                .filter(PromotionSuggestion.class::isInstance)
+                .map(PromotionSuggestion.class::cast)
+                .map(row -> new DailyInsightsOutput.PromotionSuggestion(
+                        row.stockItemId(), row.lotId(), row.expiresAt(), row.quantityInLot(),
+                        row.suggestedProducts().stream().map(product -> new DailyInsightsOutput.SuggestedProduct(
+                                product.productId(), product.productName(), product.predictedQuantityToday()
+                        )).toList()
+                ))
+                .toList();
 
         return new DailyInsightsOutput(
                 storeId,
@@ -128,16 +168,8 @@ public class DailyInsightsService {
                         row.stockItemId(), row.name(), row.unit(), row.currentQuantity(),
                         row.minimumStock(), row.affectedProductIds()
                 )).toList(),
-                expiry.expiringLots().stream().map(row -> new DailyInsightsOutput.ExpiringLot(
-                        row.lotId(), row.stockItemId(), row.stockItemName(), row.quantity(),
-                        row.expiresAt(), row.daysUntilExpiry()
-                )).toList(),
-                expiry.promotionSuggestions().stream().map(row -> new DailyInsightsOutput.PromotionSuggestion(
-                        row.stockItemId(), row.lotId(), row.expiresAt(), row.quantityInLot(),
-                        row.suggestedProducts().stream().map(product -> new DailyInsightsOutput.SuggestedProduct(
-                                product.productId(), product.productName(), product.predictedQuantityToday()
-                        )).toList()
-                )).toList()
+                expiringLots,
+                promotionSuggestions
         );
     }
 
