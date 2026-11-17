@@ -1,26 +1,30 @@
 package bti.pds.dinner.insights.domain;
 
+import org.springframework.stereotype.Component;
+
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public final class ExpiryPromotionCalculator {
-    private ExpiryPromotionCalculator() {
-    }
+@Component
+public class BurgerCriticalLotActionStrategy implements CriticalLotActionStrategy {
 
-    public static Result calculate(
-            LocalDate targetDate,
-            int expiryWindowDays,
+    private static final int EXPIRY_WINDOW_DAYS = 3;
+
+    @Override
+    public List<InventoryAction> evaluateExpiringLots(
             List<StockLotSnapshot> lots,
             List<StockItemSnapshot> items,
             List<RecipeLine> recipes,
-            List<ProductDemand> demand
+            List<ProductDemand> demand,
+            LocalDate targetDate
     ) {
-        LocalDate deadline = targetDate.plusDays(expiryWindowDays);
-        Map<Long, StockItemSnapshot> itemsById = items.stream()
-                .collect(Collectors.toMap(StockItemSnapshot::id, Function.identity()));
+        LocalDate deadline = targetDate.plusDays(EXPIRY_WINDOW_DAYS);
         Map<Long, ProductDemand> demandByProduct = demand.stream()
                 .collect(Collectors.toMap(ProductDemand::productId, Function.identity()));
         Map<Long, List<Long>> productsByItem = recipes.stream()
@@ -29,26 +33,13 @@ public final class ExpiryPromotionCalculator {
                         Collectors.mapping(RecipeLine::productId, Collectors.toList())
                 ));
 
-        List<ExpiringLot> expiring = new ArrayList<>();
-        List<PromotionSuggestion> promotions = new ArrayList<>();
+        List<InventoryAction> actions = new ArrayList<>();
 
         lots.stream()
                 .filter(lot -> lot.quantity() > 0)
                 .filter(lot -> !lot.expiresAt().isAfter(deadline))
                 .sorted(Comparator.comparing(StockLotSnapshot::expiresAt).thenComparing(StockLotSnapshot::lotId))
                 .forEach(lot -> {
-                    StockItemSnapshot item = itemsById.get(lot.stockItemId());
-                    String itemName = item == null ? ("Item " + lot.stockItemId()) : item.name();
-                    long days = ChronoUnit.DAYS.between(targetDate, lot.expiresAt());
-                    expiring.add(new ExpiringLot(
-                            lot.lotId(),
-                            lot.stockItemId(),
-                            itemName,
-                            lot.quantity(),
-                            lot.expiresAt(),
-                            days
-                    ));
-
                     List<SuggestedProduct> suggested = productsByItem.getOrDefault(lot.stockItemId(), List.of()).stream()
                             .map(demandByProduct::get)
                             .filter(Objects::nonNull)
@@ -62,7 +53,8 @@ public final class ExpiryPromotionCalculator {
                                     product.predictedQuantity()
                             ))
                             .toList();
-                    promotions.add(new PromotionSuggestion(
+
+                    actions.add(new PromotionSuggestion(
                             lot.stockItemId(),
                             lot.lotId(),
                             lot.expiresAt(),
@@ -71,35 +63,6 @@ public final class ExpiryPromotionCalculator {
                     ));
                 });
 
-        return new Result(expiring, promotions);
-    }
-
-    public record Result(List<ExpiringLot> expiringLots, List<PromotionSuggestion> promotionSuggestions) {
-    }
-
-    public record ExpiringLot(
-            Long lotId,
-            Long stockItemId,
-            String stockItemName,
-            int quantity,
-            LocalDate expiresAt,
-            long daysUntilExpiry
-    ) {
-    }
-
-    public record PromotionSuggestion(
-            Long stockItemId,
-            Long lotId,
-            LocalDate expiresAt,
-            int quantityInLot,
-            List<SuggestedProduct> suggestedProducts
-    ) {
-    }
-
-    public record SuggestedProduct(
-            Long productId,
-            String productName,
-            int predictedQuantityToday
-    ) {
+        return actions;
     }
 }

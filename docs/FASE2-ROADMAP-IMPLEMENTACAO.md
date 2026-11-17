@@ -160,7 +160,7 @@ Extrair as regras de negócio engessadas da Fase 1 para interfaces polimórficas
 > 1. Hoje, `DailyInsightsService` calcula as datas de amostragem (`sampleWeekdays`) por conta própria antes de buscar o histórico. Na Farmácia (média móvel de 30 dias) e na Loja de PCs (*Lead Time*), a janela de consulta ao histórico muda! Portanto, `DemandForecastStrategy` deve informar qual janela histórica precisa consultar (ex.: `int getHistoryWindowDays()`), ou receber o histórico do período solicitado, mantendo `ProductDemand` e `ForecastConfidence` no pacote `insights.domain` para que `PurchaseSuggestionCalculator` continue funcionando sem alterações.
 > 2. `CriticalLotActionStrategy` deve receber os snapshots já existentes em `insights.domain` (`StockLotSnapshot`, `StockItemSnapshot`, `RecipeLine`, `ProductDemand`, `LocalDate targetDate`, `int windowDays`) sem importar entidades de `stock` ou `product`.
 
-- [ ] Criar as interfaces de domínio em `bti.pds.dinner.insights.domain`:
+- [x] Criar as interfaces de domínio em `bti.pds.dinner.insights.domain`:
   ```java
   public interface DemandForecastStrategy {
       String getMethodName();
@@ -183,8 +183,8 @@ Extrair as regras de negócio engessadas da Fase 1 para interfaces polimórficas
       );
   }
   ```
-- [ ] Refatorar `DailyInsightsService` para orquestrar o fluxo (*Template Method*): consultar o histórico usando a janela da `DemandForecastStrategy`, executar `demandForecastStrategy.forecast(...)`, calcular sugestões de compra e estoque crítico, e delegar a análise de lotes para `criticalLotActionStrategy.evaluate(...)`.
-- [ ] Mover `DemandForecastCalculator` (média por dia da semana) e `ExpiryPromotionCalculator` (sugestão de promoção de vencimento) para `instances/instance-burguer` como `BurgerDemandForecastStrategy` e `BurgerPromotionActionStrategy`.
+- [x] Refatorar `DailyInsightsService` para orquestrar o fluxo (*Template Method*): consultar o histórico usando a janela da `DemandForecastStrategy`, executar `demandForecastStrategy.forecast(...)`, calcular sugestões de compra e estoque crítico, e delegar a análise de lotes para `criticalLotActionStrategy.evaluate(...)`.
+- [x] Mover `DemandForecastCalculator` (média por dia da semana) e `ExpiryPromotionCalculator` (sugestão de promoção de vencimento) para `instances/instance-burguer` como `BurgerDemandForecastStrategy` e `BurgerCriticalLotActionStrategy`.
 
 #### 🔥 Hot Spot 4: Capacidade Produtiva e Aceite Operacional (`store`)
 
@@ -218,8 +218,8 @@ Adaptar o sistema atual da Fase 1 para se comportar como a primeira aplicação 
   - [x] `BurgerLotAllocationStrategy` (`stock.domain`): implementa FEFO tradicional ordenando por `expiresAt` e `id`.
   - [x] `BurgerSaleConsumptionStrategy` (`sales.domain`): só permite cancelamento e estorno quando `PENDENTE` (bloqueia cancelamento quando `EM_PREPARO` na chapa) e aplica fator de perda `0.0`.
   - [x] `BurgerPricingStrategy` (`sales.domain`): preço de cardápio + tabela de entrega por bairros locais de Natal.
-  - [ ] `BurgerDemandForecastStrategy` (`insights.domain`): algoritmo `WEEKDAY_AVERAGE` (média das últimas 8 semanas do mesmo dia da semana).
-  - [ ] `BurgerPromotionActionStrategy` (`insights.domain`): sugere promoções no cardápio para ingredientes vencendo em até 3 dias.
+  - [x] `BurgerDemandForecastStrategy` (`insights.domain`): algoritmo `WEEKDAY_AVERAGE` (média das últimas 8 semanas do mesmo dia da semana).
+  - [x] `BurgerCriticalLotActionStrategy` (`insights.domain`): sugere promoções no cardápio para ingredientes vencendo em até 3 dias.
   - [x] `BurgerCapacityPolicy` (`store.domain`): pausa a loja se `automaticPause` estiver ativo e `currentOrdersInProgress >= maxOrdersInProgress`.
 - [ ] **Passo 4.3 — Validar com Seed da Hamburgueria:**
   - Rodar aplicação na porta `8080` e aplicar o seed de demonstração (`scripts/seed-insights-demo.sql`).
